@@ -137,10 +137,13 @@ function AdminContent() {
       await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
     } catch (error: any) {
       console.error('Login error:', error);
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+      const errorCode = error.code || 'unknown';
+      if (errorCode === 'auth/user-not-found' || errorCode === 'auth/wrong-password' || errorCode === 'auth/invalid-credential') {
         setLoginError('Correo o contraseña incorrectos');
+      } else if (errorCode === 'auth/network-request-failed') {
+        setLoginError('Error de red: No se pudo conectar con Firebase. Revisa tu conexión o los dominios autorizados.');
       } else {
-        setLoginError('Error al iniciar sesión. Verifica tu conexión.');
+        setLoginError(`Error (${errorCode}): No se pudo iniciar sesión.`);
       }
     }
   };

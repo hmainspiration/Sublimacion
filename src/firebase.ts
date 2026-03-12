@@ -11,7 +11,12 @@ let storage: any;
 
 try {
   app = initializeApp(firebaseConfig);
-  db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+  // Si firestoreDatabaseId es "(default)" o no existe, usamos la base de datos por defecto
+  const dbId = firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== '(default)' 
+    ? firebaseConfig.firestoreDatabaseId 
+    : undefined;
+    
+  db = getFirestore(app, dbId);
   auth = getAuth(app);
   storage = getStorage(app);
 } catch (error) {
