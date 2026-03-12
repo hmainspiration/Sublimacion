@@ -1,5 +1,6 @@
 import { Link, Outlet } from 'react-router-dom';
 import { ShoppingBag, Settings } from 'lucide-react';
+import ContactInfo from './ContactInfo';
 
 export default function Layout() {
   return (
@@ -27,6 +28,8 @@ export default function Layout() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <Outlet />
       </main>
+
+      <ContactInfo />
 
       <footer className="bg-oxford-900 text-stone-300 py-12 mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center text-center">

@@ -90,6 +90,40 @@ export default function Product() {
     );
   }
 
+  const handleRegisterOrder = async () => {
+    if (!clienteNombre || !clienteTelefono) {
+      alert('Por favor, ingresa tu nombre y teléfono para procesar el pedido.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    const total = selectedPrecio ? selectedPrecio.precio * cantidad : 0;
+    
+    try {
+      // Save order to Firestore
+      await addDoc(collection(db, 'pedidos'), {
+        producto_nombre: producto.nombre,
+        diseno_nombre: selectedDiseno ? `${selectedDiseno.nombre} (${selectedDiseno.codigo})` : null,
+        opcion_descripcion: selectedPrecio ? selectedPrecio.descripcion : null,
+        talla: selectedSpecificSize || selectedPrecio?.talla || null,
+        cantidad,
+        total,
+        estado: 'pendiente',
+        createdAt: serverTimestamp(),
+        cliente_nombre: clienteNombre,
+        cliente_telefono: clienteTelefono
+      });
+
+      setOrderSuccess(true);
+      setTimeout(() => setOrderSuccess(false), 5000);
+    } catch (error) {
+      console.error('Error saving order:', error);
+      alert('Hubo un error al procesar tu pedido. Por favor, intenta nuevamente.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleWhatsAppClick = async () => {
     if (!clienteNombre || !clienteTelefono) {
       alert('Por favor, ingresa tu nombre y teléfono para procesar el pedido.');
@@ -367,29 +401,39 @@ Total: C$${total}`;
                 </span>
               </div>
               
-              <button 
-                onClick={handleWhatsAppClick}
-                disabled={isSubmitting}
-                className={`w-full font-bold py-4 px-8 shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-center gap-3 text-sm uppercase tracking-wider ${
-                  orderSuccess 
-                    ? 'bg-green-500 hover:bg-green-600 text-white' 
-                    : 'bg-gold-500 hover:bg-gold-400 text-oxford-900'
-                } ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
-              >
-                {isSubmitting ? (
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-oxford-900"></div>
-                ) : orderSuccess ? (
-                  <>
-                    <CheckCircle2 className="h-5 w-5" />
-                    ¡Pedido Registrado!
-                  </>
-                ) : (
-                  <>
-                    <MessageCircle className="h-5 w-5" />
-                    Pedir por WhatsApp
-                  </>
-                )}
-              </button>
+              <div className="grid grid-cols-1 gap-4">
+                <button 
+                  onClick={handleRegisterOrder}
+                  disabled={isSubmitting}
+                  className={`w-full font-bold py-4 px-8 shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-center gap-3 text-sm uppercase tracking-wider ${
+                    orderSuccess 
+                      ? 'bg-green-500 hover:bg-green-600 text-white' 
+                      : 'bg-stone-900 hover:bg-stone-800 text-white'
+                  } ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
+                >
+                  {isSubmitting ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  ) : orderSuccess ? (
+                    <>
+                      <CheckCircle2 className="h-5 w-5" />
+                      ¡Pedido Registrado!
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCart className="h-5 w-5" />
+                      Registrar Pedido
+                    </>
+                  )}
+                </button>
+                <button 
+                  onClick={handleWhatsAppClick}
+                  disabled={isSubmitting}
+                  className={`w-full font-bold py-4 px-8 shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-center gap-3 text-sm uppercase tracking-wider bg-emerald-500 hover:bg-emerald-600 text-white ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
+                >
+                  <MessageCircle className="h-5 w-5" />
+                  Pedir por WhatsApp
+                </button>
+              </div>
             </div>
 
           </div>

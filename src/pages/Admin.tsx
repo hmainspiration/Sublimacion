@@ -78,10 +78,16 @@ function AdminContent() {
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
 
-  const [activeTab, setActiveTab] = useState<'productos' | 'categorias' | 'colecciones' | 'pedidos' | 'usuarios'>('pedidos');
+  const [activeTab, setActiveTab] = useState<'productos' | 'categorias' | 'colecciones' | 'pedidos' | 'usuarios' | 'configuracion'>('pedidos');
   const [users, setUsers] = useState<{id: string, email: string, role: string}[]>([]);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [newUserEmail, setNewUserEmail] = useState('');
+  const [settings, setSettings] = useState({ 
+    telefono: '', 
+    banco: '', 
+    redes: '', 
+    visible: false 
+  });
 
   const handleFirestoreError = (error: unknown, operationType: OperationType, path: string | null) => {
     const errInfo: FirestoreErrorInfo = {
@@ -328,12 +334,13 @@ function AdminContent() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [catSnap, prodSnap, colSnap, pedSnap, userSnap] = await Promise.all([
+      const [catSnap, prodSnap, colSnap, pedSnap, userSnap, settingsSnap] = await Promise.all([
         getDocs(collection(db, 'categorias')),
         getDocs(collection(db, 'productos')),
         getDocs(collection(db, 'colecciones')),
         getDocs(query(collection(db, 'pedidos'), orderBy('createdAt', 'desc'))),
-        getDocs(collection(db, 'users'))
+        getDocs(collection(db, 'users')),
+        getDocFromServer(doc(db, 'settings', 'contacto'))
       ]);
 
       setCategorias(catSnap.docs.map(d => ({ id: d.id, ...d.data() } as Categoria)));
@@ -341,6 +348,9 @@ function AdminContent() {
       setColecciones(colSnap.docs.map(d => ({ id: d.id, ...d.data() } as Coleccion)));
       setPedidos(pedSnap.docs.map(d => ({ id: d.id, ...d.data() } as Pedido)));
       setUsers(userSnap.docs.map(d => ({ id: d.id, email: d.data().email, role: d.data().role })));
+      if (settingsSnap.exists()) {
+        setSettings(settingsSnap.data() as any);
+      }
     } catch (err) {
       console.error('Error fetching admin data:', err);
     } finally {
@@ -717,6 +727,16 @@ function AdminContent() {
         >
           Administradores
         </button>
+        <button
+          onClick={() => setActiveTab('configuracion')}
+          className={`pb-3 px-2 text-sm font-medium transition-colors whitespace-nowrap ${
+            activeTab === 'configuracion' 
+              ? 'border-b-2 border-gold-500 text-gold-600' 
+              : 'text-stone-500 hover:text-stone-700'
+          }`}
+        >
+          Configuración
+        </button>
       </div>
 
       {activeTab === 'pedidos' && (
@@ -1042,6 +1062,44 @@ function AdminContent() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'configuracion' && (
+        <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-6">
+          <h3 className="font-semibold text-stone-900 mb-6">Configuración de Contacto</h3>
+          <div className="space-y-4 max-w-md">
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-1">Teléfono</label>
+              <input type="text" value={settings.telefono} onChange={e => setSettings({...settings, telefono: e.target.value})} className="w-full px-3 py-2 border border-stone-300 rounded-lg" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-1">Cuenta Bancaria</label>
+              <input type="text" value={settings.banco} onChange={e => setSettings({...settings, banco: e.target.value})} className="w-full px-3 py-2 border border-stone-300 rounded-lg" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-1">Redes Sociales</label>
+              <input type="text" value={settings.redes} onChange={e => setSettings({...settings, redes: e.target.value})} className="w-full px-3 py-2 border border-stone-300 rounded-lg" />
+            </div>
+            <div className="flex items-center">
+              <input type="checkbox" id="visible" checked={settings.visible} onChange={e => setSettings({...settings, visible: e.target.checked})} className="h-4 w-4 text-emerald-600 border-stone-300 rounded" />
+              <label htmlFor="visible" className="ml-2 block text-sm text-stone-900">Hacer visible en la página principal</label>
+            </div>
+            <button 
+              onClick={async () => {
+                try {
+                  await updateDoc(doc(db, 'settings', 'contacto'), settings);
+                  alert('Configuración guardada');
+                } catch (e) {
+                  await addDoc(collection(db, 'settings'), { ...settings, id: 'contacto' });
+                  alert('Configuración guardada');
+                }
+              }}
+              className="bg-stone-900 hover:bg-stone-800 text-white px-4 py-2 rounded-lg font-medium"
+            >
+              Guardar Configuración
+            </button>
           </div>
         </div>
       )}

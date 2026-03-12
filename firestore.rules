@@ -56,7 +56,10 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isAuthenticated(); // TEMPORAL: Cualquier usuario autenticado es admin
+      return isAuthenticated() &&
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         request.auth.token.email == "hmalldm95@gmail.com");
     }
 
     function isOwner(userId) {
@@ -74,6 +77,14 @@ service cloud.firestore {
     // ===============================================================
     // Domain Validators
     // ===============================================================
+
+    function isValidSettings(data) {
+      return hasOnlyAllowedFields(['telefono', 'banco', 'redes', 'visible']) &&
+             data.telefono is string && data.telefono.size() < 50 &&
+             data.banco is string && data.banco.size() < 100 &&
+             data.redes is string && data.redes.size() < 200 &&
+             data.visible is bool;
+    }
 
     function isValidColeccion(data) {
       return hasOnlyAllowedFields(['nombre', 'descripcion', 'imagen', 'codigo_acceso', 'activa']) &&
@@ -156,6 +167,13 @@ service cloud.firestore {
       allow create: if isValidPedido(request.resource.data) && request.resource.data.estado == 'pendiente';
       allow read: if isAdmin();
       allow update: if isAdmin() && isValidPedido(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /settings/{settingId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidSettings(request.resource.data);
+      allow update: if isAdmin() && isValidSettings(request.resource.data);
       allow delete: if isAdmin();
     }
 
