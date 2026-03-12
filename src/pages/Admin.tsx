@@ -198,11 +198,11 @@ function AdminContent() {
         }
       }
 
-      // 3. Diseños comunes
+      // 3. Diseños
       const disenosComunes = [
-        { id: '1', nombre: 'Diseño Árbol', codigo: '1A', imagen: '' },
-        { id: '2', nombre: 'Diseño 100 Años', codigo: '1C', imagen: '' },
-        { id: '3', nombre: 'Diseño Naciones', codigo: '1N', imagen: '' }
+        { id: '1', nombre: 'Diseño Árbol', codigo: 'DA', imagen: '' },
+        { id: '2', nombre: 'Diseño 100 Años', codigo: 'DC', imagen: '' },
+        { id: '3', nombre: 'Diseño Naciones', codigo: 'DN', imagen: '' }
       ];
 
       // 4. Productos
@@ -212,70 +212,98 @@ function AdminContent() {
           descripcion: 'Camisa de alta calidad con diseños exclusivos del centenario.',
           categoria_id: catIds['Camisas sublimadas'],
           imagen: 'https://picsum.photos/seed/camisa1/600/600',
-          disenos: disenosComunes,
-          precios: [
-            { descripcion: 'Frente simple', talla: 'Juvenil 0-8', precio: 250 },
-            { descripcion: 'Frente simple', talla: '10 a XL', precio: 260 },
-            { descripcion: 'Frente simple', talla: '2XL y 3XL', precio: 300 },
-            { descripcion: 'Frente y espalda', talla: 'Juvenil 0-8', precio: 280 },
-            { descripcion: 'Frente y espalda', talla: '10 a XL', precio: 300 },
-            { descripcion: 'Frente y espalda', talla: '2XL y 3XL', precio: 340 }
-          ]
+          disenos: [
+            { nombre: 'Frente simple - Árbol', codigo: 'C1DA', imagen: 'C1DA' },
+            { nombre: 'Frente simple - 100 Años', codigo: 'C1DC', imagen: 'C1DC' },
+            { nombre: 'Frente simple - Naciones', codigo: 'C1DN', imagen: 'C1DN' },
+            { nombre: 'Frente y espalda - Árbol', codigo: 'C2DA', imagen: 'C2DA' },
+            { nombre: 'Frente y espalda - 100 Años', codigo: 'C2DC', imagen: 'C2DC' },
+            { nombre: 'Frente y espalda - Naciones', codigo: 'C2DN', imagen: 'C2DN' }
+          ],
+          precios: [{ descripcion: 'Estándar', talla: 'Única', precio: 260 }]
         },
         {
           nombre: 'Taza Sublimada 11oz',
           descripcion: 'Taza de cerámica de 11oz con diseño del centenario.',
           categoria_id: catIds['Tazas sublimadas 11oz'],
           imagen: 'https://picsum.photos/seed/taza1/600/600',
-          disenos: disenosComunes,
+          disenos: [
+            { nombre: 'Diseño Árbol', codigo: '1TDA', imagen: '1TDA' },
+            { nombre: 'Diseño 100 Años', codigo: '1TDC', imagen: '1TDC' },
+            { nombre: 'Diseño Naciones', codigo: '1TDN', imagen: '1TDN' }
+          ],
           precios: [{ descripcion: 'Estándar', talla: 'Única', precio: 150 }]
         },
         {
-          nombre: 'Termo de acero para café 500ml',
-          descripcion: 'Termo de acero inoxidable ideal para mantener tu café caliente.',
+          nombre: 'Termo de acero 500ml',
+          descripcion: 'Termo de acero inoxidable.',
           categoria_id: catIds['Termos de acero 500ml'],
           imagen: 'https://picsum.photos/seed/termo500/600/600',
-          disenos: disenosComunes,
+          disenos: [
+            { nombre: 'Diseño Árbol', codigo: '2TCDA', imagen: '2TCDA' },
+            { nombre: 'Diseño 100 Años', codigo: '2TCDC', imagen: '2TCDC' },
+            { nombre: 'Diseño Naciones', codigo: '2TCDN', imagen: '2TCDN' }
+          ],
           precios: [{ descripcion: 'Estándar', talla: '500ml', precio: 450 }]
         },
         {
           nombre: 'Termo de aluminio 600ml',
-          descripcion: 'Termo ligero de aluminio para llevar a todas partes.',
+          descripcion: 'Termo ligero de aluminio.',
           categoria_id: catIds['Termos de aluminio 600ml'],
           imagen: 'https://picsum.photos/seed/termo600/600/600',
-          disenos: disenosComunes,
+          disenos: [
+            { nombre: 'Diseño Árbol', codigo: '3TADA', imagen: '3TADA' },
+            { nombre: 'Diseño 100 Años', codigo: '3TADC', imagen: '3TADC' },
+            { nombre: 'Diseño Naciones', codigo: '3TADN', imagen: '3TADN' }
+          ],
           precios: [{ descripcion: 'Estándar', talla: '600ml', precio: 240 }]
         },
         {
-          nombre: 'Llavero Metálico Centenario',
+          nombre: 'Llaveros',
           descripcion: 'Llavero metálico conmemorativo.',
           categoria_id: catIds['Llaveros'],
           imagen: 'https://picsum.photos/seed/llavero1/600/600',
-          disenos: [disenosComunes[0], disenosComunes[1]],
+          disenos: [
+            { nombre: 'Diseño Árbol', codigo: 'LL2DA', imagen: 'LL2DA' },
+            { nombre: 'Diseño 100 Años', codigo: 'LL2DC', imagen: 'LL2DC' },
+            { nombre: 'Diseño Naciones', codigo: 'LL2DN', imagen: 'LL2DN' }
+          ],
           precios: [{ descripcion: 'Estándar', talla: 'Única', precio: 120 }]
         },
         {
-          nombre: 'Gorra de Malla Sublimada',
-          descripcion: 'Gorra tipo trucker con diseño del centenario.',
+          nombre: 'Gorras',
+          descripcion: 'Gorra tipo trucker.',
           categoria_id: catIds['Gorras'],
           imagen: 'https://picsum.photos/seed/gorra1/600/600',
-          disenos: [disenosComunes[0], disenosComunes[1]],
+          disenos: [
+            { nombre: 'Diseño Árbol', codigo: 'G1DA', imagen: 'G1DA' },
+            { nombre: 'Diseño 100 Años', codigo: 'G1DC', imagen: 'G1DC' },
+            { nombre: 'Diseño Naciones', codigo: 'G1DN', imagen: 'G1DN' }
+          ],
           precios: [{ descripcion: 'Estándar', talla: 'Única', precio: 180 }]
         },
         {
-          nombre: 'Lámina de Aluminio 21x29',
-          descripcion: 'Lámina de aluminio sublimada con retratos (NJG, SJF, AJG).',
+          nombre: 'Láminas de aluminio 21x29',
+          descripcion: 'Lámina de aluminio sublimada.',
           categoria_id: catIds['Láminas de aluminio 21x29'],
           imagen: 'https://picsum.photos/seed/lamina1/600/600',
-          disenos: [],
+          disenos: [
+            { nombre: 'Retrato Apóstol Naasón Joaquín', codigo: 'R1NJG', imagen: 'R1NJG' },
+            { nombre: 'Retrato Apóstol Samuel Joaquín', codigo: 'R1SJF', imagen: 'R1SJF' },
+            { nombre: 'Retrato Apóstol Aarón Joaquín', codigo: 'R1AJG', imagen: 'R1AJG' }
+          ],
           precios: [{ descripcion: 'Estándar', talla: '21x29 cm', precio: 300 }]
         },
         {
           nombre: 'Papel Fotográfico',
-          descripcion: 'Impresión en papel fotográfico de alta calidad.',
+          descripcion: 'Impresión en papel fotográfico.',
           categoria_id: catIds['Papel fotográfico'],
           imagen: 'https://picsum.photos/seed/papel1/600/600',
-          disenos: [],
+          disenos: [
+            { nombre: 'Fotografía Apóstol Naasón Joaquín', codigo: 'F1NJG', imagen: 'F1NJG' },
+            { nombre: 'Fotografía Apóstol Samuel Joaquín', codigo: 'F1SJF', imagen: 'F1SJF' },
+            { nombre: 'Fotografía Apóstol Aarón Joaquín', codigo: 'F1AJG', imagen: 'F1AJG' }
+          ],
           precios: [{ descripcion: 'Estándar', talla: 'Varios', precio: 100 }]
         }
       ];
