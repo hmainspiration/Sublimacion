@@ -1,0 +1,172 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: colecciones
+    // Fields:
+    //   - nombre: string (required)
+    //   - descripcion: string (optional)
+    //   - imagen: string (required)
+    //   - codigo_acceso: string (optional)
+    //   - activa: boolean (required)
+    //
+    // Collection: categorias
+    // Fields:
+    //   - nombre: string (required)
+    //   - imagen: string (required)
+    //   - coleccion_id: string (required)
+    //
+    // Collection: productos
+    // Fields:
+    //   - nombre: string (required)
+    //   - descripcion: string (required)
+    //   - categoria_id: string (required)
+    //   - imagen: string (required)
+    //   - disenos: list (optional)
+    //   - precios: list (optional)
+    //
+    // Collection: pedidos
+    // Fields:
+    //   - producto_nombre: string (required)
+    //   - diseno_nombre: string (optional)
+    //   - opcion_descripcion: string (optional)
+    //   - talla: string (optional)
+    //   - cantidad: number (required)
+    //   - total: number (required)
+    //   - estado: string (required, 'pendiente', 'completado', 'cancelado')
+    //   - createdAt: timestamp (required)
+    //   - cliente_nombre: string (required)
+    //   - cliente_telefono: string (required)
+    //
+    // Collection: users
+    // Fields:
+    //   - email: string (required)
+    //   - role: string (required, 'admin')
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "hmalldm95@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidColeccion(data) {
+      return hasOnlyAllowedFields(['nombre', 'descripcion', 'imagen', 'codigo_acceso', 'activa']) &&
+             hasRequiredFields(['nombre', 'imagen', 'activa']) &&
+             data.nombre is string && data.nombre.size() > 0 && data.nombre.size() < 100 &&
+             data.imagen is string && data.imagen.size() > 0 && data.imagen.size() < 500 &&
+             data.activa is bool &&
+             (!('descripcion' in data) || (data.descripcion is string && data.descripcion.size() < 1000)) &&
+             (!('codigo_acceso' in data) || (data.codigo_acceso is string && data.codigo_acceso.size() < 50));
+    }
+
+    function isValidCategoria(data) {
+      return hasOnlyAllowedFields(['nombre', 'imagen', 'coleccion_id']) &&
+             hasRequiredFields(['nombre', 'imagen', 'coleccion_id']) &&
+             data.nombre is string && data.nombre.size() > 0 && data.nombre.size() < 100 &&
+             data.imagen is string && data.imagen.size() > 0 && data.imagen.size() < 500 &&
+             data.coleccion_id is string && data.coleccion_id.size() > 0 && data.coleccion_id.size() < 100;
+    }
+
+    function isValidProducto(data) {
+      return hasOnlyAllowedFields(['nombre', 'descripcion', 'categoria_id', 'imagen', 'disenos', 'precios']) &&
+             hasRequiredFields(['nombre', 'descripcion', 'categoria_id', 'imagen']) &&
+             data.nombre is string && data.nombre.size() > 0 && data.nombre.size() < 100 &&
+             data.descripcion is string && data.descripcion.size() > 0 && data.descripcion.size() < 2000 &&
+             data.categoria_id is string && data.categoria_id.size() > 0 && data.categoria_id.size() < 100 &&
+             data.imagen is string && data.imagen.size() > 0 && data.imagen.size() < 500 &&
+             (!('disenos' in data) || (data.disenos is list && data.disenos.size() < 50)) &&
+             (!('precios' in data) || (data.precios is list && data.precios.size() < 50));
+    }
+
+    function isValidPedido(data) {
+      return hasOnlyAllowedFields(['producto_nombre', 'diseno_nombre', 'opcion_descripcion', 'talla', 'cantidad', 'total', 'estado', 'createdAt', 'cliente_nombre', 'cliente_telefono']) &&
+             hasRequiredFields(['producto_nombre', 'cantidad', 'total', 'estado', 'createdAt', 'cliente_nombre', 'cliente_telefono']) &&
+             data.producto_nombre is string && data.producto_nombre.size() > 0 && data.producto_nombre.size() < 100 &&
+             data.cantidad is number && data.cantidad > 0 && data.cantidad < 1000 &&
+             data.total is number && data.total >= 0 &&
+             data.estado in ['pendiente', 'completado', 'cancelado'] &&
+             data.createdAt is timestamp &&
+             data.cliente_nombre is string && data.cliente_nombre.size() > 0 && data.cliente_nombre.size() < 100 &&
+             data.cliente_telefono is string && data.cliente_telefono.size() > 0 && data.cliente_telefono.size() < 50 &&
+             (!('diseno_nombre' in data) || (data.diseno_nombre is string && data.diseno_nombre.size() < 100)) &&
+             (!('opcion_descripcion' in data) || (data.opcion_descripcion is string && data.opcion_descripcion.size() < 100)) &&
+             (!('talla' in data) || (data.talla is string && data.talla.size() < 50));
+    }
+
+    function isValidUser(data) {
+      return hasOnlyAllowedFields(['email', 'role']) &&
+             hasRequiredFields(['email', 'role']) &&
+             data.email is string && data.email.size() > 0 && data.email.size() < 100 &&
+             data.role == 'admin';
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /colecciones/{coleccionId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidColeccion(request.resource.data);
+      allow update: if isAdmin() && isValidColeccion(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /categorias/{categoriaId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidCategoria(request.resource.data);
+      allow update: if isAdmin() && isValidCategoria(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /productos/{productoId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidProducto(request.resource.data);
+      allow update: if isAdmin() && isValidProducto(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /pedidos/{pedidoId} {
+      // Anyone can create an order, but only admins can read, update, or delete them
+      allow create: if isValidPedido(request.resource.data) && request.resource.data.estado == 'pendiente';
+      allow read: if isAdmin();
+      allow update: if isAdmin() && isValidPedido(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() && isValidUser(request.resource.data);
+      allow update: if isAdmin() && isValidUser(request.resource.data);
+      allow delete: if isAdmin();
+    }
+  }
+}

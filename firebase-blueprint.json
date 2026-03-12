@@ -1,0 +1,113 @@
+{
+  "entities": {
+    "Coleccion": {
+      "title": "Coleccion",
+      "description": "Una colección de productos",
+      "type": "object",
+      "properties": {
+        "nombre": { "type": "string" },
+        "descripcion": { "type": "string" },
+        "imagen": { "type": "string" },
+        "codigo_acceso": { "type": "string" },
+        "activa": { "type": "boolean" }
+      },
+      "required": ["nombre", "imagen", "activa"]
+    },
+    "Categoria": {
+      "title": "Categoria",
+      "description": "Categoría de productos dentro de una colección",
+      "type": "object",
+      "properties": {
+        "nombre": { "type": "string" },
+        "imagen": { "type": "string" },
+        "coleccion_id": { "type": "string" }
+      },
+      "required": ["nombre", "imagen", "coleccion_id"]
+    },
+    "Producto": {
+      "title": "Producto",
+      "description": "Un producto a la venta",
+      "type": "object",
+      "properties": {
+        "nombre": { "type": "string" },
+        "descripcion": { "type": "string" },
+        "categoria_id": { "type": "string" },
+        "imagen": { "type": "string" },
+        "disenos": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "nombre": { "type": "string" },
+              "codigo": { "type": "string" },
+              "imagen": { "type": "string" }
+            }
+          }
+        },
+        "precios": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "descripcion": { "type": "string" },
+              "talla": { "type": "string" },
+              "precio": { "type": "number" }
+            }
+          }
+        }
+      },
+      "required": ["nombre", "descripcion", "categoria_id", "imagen"]
+    },
+    "Pedido": {
+      "title": "Pedido",
+      "description": "Un pedido realizado por un cliente",
+      "type": "object",
+      "properties": {
+        "producto_nombre": { "type": "string" },
+        "diseno_nombre": { "type": "string" },
+        "opcion_descripcion": { "type": "string" },
+        "talla": { "type": "string" },
+        "cantidad": { "type": "number" },
+        "total": { "type": "number" },
+        "estado": { "type": "string", "enum": ["pendiente", "completado", "cancelado"] },
+        "createdAt": { "type": "timestamp" },
+        "cliente_nombre": { "type": "string" },
+        "cliente_telefono": { "type": "string" }
+      },
+      "required": ["producto_nombre", "cantidad", "total", "estado", "createdAt", "cliente_nombre", "cliente_telefono"]
+    },
+    "User": {
+      "title": "User",
+      "description": "Usuario del sistema (admin)",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin"] }
+      },
+      "required": ["email", "role"]
+    }
+  },
+  "firestore": {
+    "/colecciones/{coleccionId}": {
+      "schema": { "$ref": "#/entities/Coleccion" },
+      "description": "Colecciones de productos"
+    },
+    "/categorias/{categoriaId}": {
+      "schema": { "$ref": "#/entities/Categoria" },
+      "description": "Categorías de productos"
+    },
+    "/productos/{productoId}": {
+      "schema": { "$ref": "#/entities/Producto" },
+      "description": "Productos"
+    },
+    "/pedidos/{pedidoId}": {
+      "schema": { "$ref": "#/entities/Pedido" },
+      "description": "Pedidos de clientes"
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Usuarios administradores"
+    }
+  }
+}
