@@ -44,27 +44,27 @@ export default function Admin() {
 function AdminContent() {
   const [globalError, setGlobalError] = useState<Error | null>(null);
   const [productos, setProductos] = useState<Producto[]>([]);
-  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const[categorias, setCategorias] = useState<Categoria[]>([]);
   const [colecciones, setColecciones] = useState<Coleccion[]>([]);
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
-  const [loading, setLoading] = useState(true);
+  const[loading, setLoading] = useState(true);
   
   // Modals state
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const[isModalOpen, setIsModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isColeccionModalOpen, setIsColeccionModalOpen] = useState(false);
   
   // Forms state
   const [newProduct, setNewProduct] = useState({ nombre: '', descripcion: '', categoria_id: '', imagen: '' });
-  const [productImageFile, setProductImageFile] = useState<File | null>(null);
+  const[productImageFile, setProductImageFile] = useState<File | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedDisenos, setSelectedDisenos] = useState<{ id: string, nombre: string, codigo: string, imagen: string }[]>([]);
-  const [productPrecios, setProductPrecios] = useState<{ descripcion: string, talla: string, precio: number }[]>([]);
+  const[productPrecios, setProductPrecios] = useState<{ descripcion: string, talla: string, precio: number }[]>([]);
   
   const [editingCategory, setEditingCategory] = useState<Categoria | null>(null);
   const [categoryImageFile, setCategoryImageFile] = useState<File | null>(null);
-  const [editingColeccion, setEditingColeccion] = useState<Coleccion | null>(null);
-  const [newColeccion, setNewColeccion] = useState({ nombre: '', descripcion: '', codigo_acceso: '', imagen: '', activa: true });
+  const[editingColeccion, setEditingColeccion] = useState<Coleccion | null>(null);
+  const[newColeccion, setNewColeccion] = useState({ nombre: '', descripcion: '', codigo_acceso: '', imagen: '', activa: true });
   const [coleccionImageFile, setColeccionImageFile] = useState<File | null>(null);
 
   const handleImageUpload = async (file: File, path: string): Promise<string> => {
@@ -74,7 +74,7 @@ function AdminContent() {
   };
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loginEmail, setLoginEmail] = useState('');
+  const[loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
 
@@ -82,7 +82,7 @@ function AdminContent() {
   const [users, setUsers] = useState<{id: string, email: string, role: string}[]>([]);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [newUserEmail, setNewUserEmail] = useState('');
-  const [settings, setSettings] = useState({ 
+  const[settings, setSettings] = useState({ 
     telefono: '', 
     banco: '', 
     redes: '', 
@@ -103,7 +103,7 @@ function AdminContent() {
           displayName: provider.displayName,
           email: provider.email,
           photoUrl: provider.photoURL
-        })) || []
+        })) ||[]
       },
       operationType,
       path
@@ -134,7 +134,7 @@ function AdminContent() {
       }
     });
     return () => unsubscribe();
-  }, []);
+  },[]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,7 +159,7 @@ function AdminContent() {
   };
 
   const [importing, setImporting] = useState(false);
-  const [importError, setImportError] = useState<string | null>(null);
+  const[importError, setImportError] = useState<string | null>(null);
 
   const handleImportInitialData = async () => {
     setImporting(true);
@@ -169,7 +169,8 @@ function AdminContent() {
       // 1. Crear Colección, asegurar Admin y Configuración
       let colRef;
       try {
-        await addDoc(collection(db, 'users'), {
+        // MODIFICADO: Guardar el admin principal usando setDoc para que el ID sea su correo
+        await setDoc(doc(db, 'users', 'hmalldm95@gmail.com'), {
           email: 'hmalldm95@gmail.com',
           role: 'admin'
         });
@@ -193,7 +194,7 @@ function AdminContent() {
       const colId = colRef.id;
 
       // 2. Crear Categorías
-      const categoriasData = [
+      const categoriasData =[
         { nombre: 'Camisas sublimadas', imagen: 'https://picsum.photos/seed/camisas/400/300' },
         { nombre: 'Tazas sublimadas 11oz', imagen: 'https://picsum.photos/seed/tazas/400/300' },
         { nombre: 'Termos de acero 500ml', imagen: 'https://picsum.photos/seed/termos500/400/300' },
@@ -215,20 +216,20 @@ function AdminContent() {
       }
 
       // 3. Diseños
-      const disenosComunes = [
+      const disenosComunes =[
         { id: '1', nombre: 'Diseño Árbol', codigo: 'DA', imagen: '' },
         { id: '2', nombre: 'Diseño 100 Años', codigo: 'DC', imagen: '' },
         { id: '3', nombre: 'Diseño Naciones', codigo: 'DN', imagen: '' }
       ];
 
       // 4. Productos
-      const productosData = [
+      const productosData =[
         {
           nombre: 'Camisa Sublimada Centenario',
           descripcion: 'Camisa de alta calidad con diseños exclusivos del centenario.',
           categoria_id: catIds['Camisas sublimadas'],
           imagen: 'https://picsum.photos/seed/camisa1/600/600',
-          disenos: [
+          disenos:[
             { nombre: 'Frente simple - Árbol', codigo: 'C1DA', imagen: 'C1DA' },
             { nombre: 'Frente simple - 100 Años', codigo: 'C1DC', imagen: 'C1DC' },
             { nombre: 'Frente simple - Naciones', codigo: 'C1DN', imagen: 'C1DN' },
@@ -236,86 +237,86 @@ function AdminContent() {
             { nombre: 'Frente y espalda - 100 Años', codigo: 'C2DC', imagen: 'C2DC' },
             { nombre: 'Frente y espalda - Naciones', codigo: 'C2DN', imagen: 'C2DN' }
           ],
-          precios: [{ descripcion: 'Estándar', talla: 'Única', precio: 260 }]
+          precios:[{ descripcion: 'Estándar', talla: 'Única', precio: 260 }]
         },
         {
           nombre: 'Taza Sublimada 11oz',
           descripcion: 'Taza de cerámica de 11oz con diseño del centenario.',
           categoria_id: catIds['Tazas sublimadas 11oz'],
           imagen: 'https://picsum.photos/seed/taza1/600/600',
-          disenos: [
+          disenos:[
             { nombre: 'Diseño Árbol', codigo: '1TDA', imagen: '1TDA' },
             { nombre: 'Diseño 100 Años', codigo: '1TDC', imagen: '1TDC' },
             { nombre: 'Diseño Naciones', codigo: '1TDN', imagen: '1TDN' }
           ],
-          precios: [{ descripcion: 'Estándar', talla: 'Única', precio: 150 }]
+          precios:[{ descripcion: 'Estándar', talla: 'Única', precio: 150 }]
         },
         {
           nombre: 'Termo de acero 500ml',
           descripcion: 'Termo de acero inoxidable.',
           categoria_id: catIds['Termos de acero 500ml'],
           imagen: 'https://picsum.photos/seed/termo500/600/600',
-          disenos: [
+          disenos:[
             { nombre: 'Diseño Árbol', codigo: '2TCDA', imagen: '2TCDA' },
             { nombre: 'Diseño 100 Años', codigo: '2TCDC', imagen: '2TCDC' },
             { nombre: 'Diseño Naciones', codigo: '2TCDN', imagen: '2TCDN' }
           ],
-          precios: [{ descripcion: 'Estándar', talla: '500ml', precio: 450 }]
+          precios:[{ descripcion: 'Estándar', talla: '500ml', precio: 450 }]
         },
         {
           nombre: 'Termo de aluminio 600ml',
           descripcion: 'Termo ligero de aluminio.',
           categoria_id: catIds['Termos de aluminio 600ml'],
           imagen: 'https://picsum.photos/seed/termo600/600/600',
-          disenos: [
+          disenos:[
             { nombre: 'Diseño Árbol', codigo: '3TADA', imagen: '3TADA' },
             { nombre: 'Diseño 100 Años', codigo: '3TADC', imagen: '3TADC' },
             { nombre: 'Diseño Naciones', codigo: '3TADN', imagen: '3TADN' }
           ],
-          precios: [{ descripcion: 'Estándar', talla: '600ml', precio: 240 }]
+          precios:[{ descripcion: 'Estándar', talla: '600ml', precio: 240 }]
         },
         {
           nombre: 'Llaveros',
           descripcion: 'Llavero metálico conmemorativo.',
           categoria_id: catIds['Llaveros'],
           imagen: 'https://picsum.photos/seed/llavero1/600/600',
-          disenos: [
+          disenos:[
             { nombre: 'Diseño Árbol', codigo: 'LL2DA', imagen: 'LL2DA' },
             { nombre: 'Diseño 100 Años', codigo: 'LL2DC', imagen: 'LL2DC' },
             { nombre: 'Diseño Naciones', codigo: 'LL2DN', imagen: 'LL2DN' }
           ],
-          precios: [{ descripcion: 'Estándar', talla: 'Única', precio: 120 }]
+          precios:[{ descripcion: 'Estándar', talla: 'Única', precio: 120 }]
         },
         {
           nombre: 'Gorras',
           descripcion: 'Gorra tipo trucker.',
           categoria_id: catIds['Gorras'],
           imagen: 'https://picsum.photos/seed/gorra1/600/600',
-          disenos: [
+          disenos:[
             { nombre: 'Diseño Árbol', codigo: 'G1DA', imagen: 'G1DA' },
             { nombre: 'Diseño 100 Años', codigo: 'G1DC', imagen: 'G1DC' },
             { nombre: 'Diseño Naciones', codigo: 'G1DN', imagen: 'G1DN' }
           ],
-          precios: [{ descripcion: 'Estándar', talla: 'Única', precio: 180 }]
+          precios:[{ descripcion: 'Estándar', talla: 'Única', precio: 180 }]
         },
         {
           nombre: 'Láminas de aluminio 21x29',
           descripcion: 'Lámina de aluminio sublimada.',
           categoria_id: catIds['Láminas de aluminio 21x29'],
           imagen: 'https://picsum.photos/seed/lamina1/600/600',
-          disenos: [
+          disenos:[
             { nombre: 'Retrato Apóstol Naasón Joaquín', codigo: 'R1NJG', imagen: 'R1NJG' },
             { nombre: 'Retrato Apóstol Samuel Joaquín', codigo: 'R1SJF', imagen: 'R1SJF' },
             { nombre: 'Retrato Apóstol Aarón Joaquín', codigo: 'R1AJG', imagen: 'R1AJG' }
           ],
-          precios: [{ descripcion: 'Estándar', talla: '21x29 cm', precio: 300 }]
+          precios:[{ descripcion: 'Estándar', talla: '21x29 cm', precio: 300 }]
         },
         {
           nombre: 'Papel Fotográfico',
           descripcion: 'Impresión en papel fotográfico.',
           categoria_id: catIds['Papel fotográfico'],
           imagen: 'https://picsum.photos/seed/papel1/600/600',
-          disenos: [
+          disenos:[
             { nombre: 'Fotografía Apóstol Naasón Joaquín', codigo: 'F1NJG', imagen: 'F1NJG' },
             { nombre: 'Fotografía Apóstol Samuel Joaquín', codigo: 'F1SJF', imagen: 'F1SJF' },
             { nombre: 'Fotografía Apóstol Aarón Joaquín', codigo: 'F1AJG', imagen: 'F1AJG' }
@@ -344,7 +345,7 @@ function AdminContent() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [catSnap, prodSnap, colSnap, pedSnap, userSnap, settingsSnap] = await Promise.all([
+      const[catSnap, prodSnap, colSnap, pedSnap, userSnap, settingsSnap] = await Promise.all([
         getDocs(collection(db, 'categorias')),
         getDocs(collection(db, 'productos')),
         getDocs(collection(db, 'colecciones')),
@@ -389,7 +390,7 @@ function AdminContent() {
     });
     setEditingId(producto.id);
     setSelectedDisenos(producto.disenos || []);
-    setProductPrecios(producto.precios || []);
+    setProductPrecios(producto.precios ||[]);
     setProductImageFile(null);
     setIsModalOpen(true);
   };
@@ -512,12 +513,14 @@ function AdminContent() {
     e.preventDefault();
     if (!newUserEmail) return;
     try {
-      // Nota: Esto solo autoriza el correo en Firestore. 
-      // El usuario aún debe crear su cuenta con ese correo (o tú crearla en la consola).
-      await addDoc(collection(db, 'users'), {
-        email: newUserEmail.toLowerCase(),
+      // MODIFICADO: Usamos setDoc en lugar de addDoc para forzar que el ID sea el correo
+      const emailToSave = newUserEmail.toLowerCase();
+      
+      await setDoc(doc(db, 'users', emailToSave), {
+        email: emailToSave,
         role: 'admin'
       });
+      
       setNewUserEmail('');
       setIsUserModalOpen(false);
       fetchData();
@@ -526,6 +529,7 @@ function AdminContent() {
       alert('Error al autorizar usuario.');
     }
   };
+  
   const updatePedidoEstado = async (id: string, estado: 'pendiente' | 'completado' | 'cancelado') => {
     try {
       await updateDoc(doc(db, 'pedidos', id), { estado });
@@ -1273,7 +1277,7 @@ function AdminContent() {
                       <button 
                         type="button"
                         onClick={() => {
-                          const newPrecios = [...productPrecios];
+                          const newPrecios =[...productPrecios];
                           newPrecios.splice(index, 1);
                           setProductPrecios(newPrecios);
                         }}
@@ -1331,7 +1335,7 @@ function AdminContent() {
                         placeholder="URL Imagen"
                         value={diseno.imagen}
                         onChange={e => {
-                          const newDisenos = [...selectedDisenos];
+                          const newDisenos =[...selectedDisenos];
                           newDisenos[index].imagen = e.target.value;
                           setSelectedDisenos(newDisenos);
                         }}
