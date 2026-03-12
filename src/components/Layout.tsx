@@ -16,10 +16,6 @@ export default function Layout() {
               <Link to="/" className="text-oxford-800 hover:text-gold-600 font-medium transition-colors text-sm uppercase tracking-wider">
                 Catálogo
               </Link>
-              <Link to="/admin" className="text-oxford-800 hover:text-gold-600 font-medium transition-colors flex items-center gap-2 text-sm uppercase tracking-wider">
-                <Settings className="h-4 w-4" />
-                <span className="hidden sm:inline">Admin</span>
-              </Link>
             </nav>
           </div>
         </div>
