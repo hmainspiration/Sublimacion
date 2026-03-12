@@ -584,7 +584,12 @@ function AdminContent() {
         <div className="flex items-center gap-4">
           <div className="flex flex-col items-end">
             <span className="text-xs font-medium text-stone-500">{auth.currentUser?.email}</span>
-            <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Administrador Verificado</span>
+            <button 
+              onClick={() => alert(`UID: ${auth.currentUser?.uid}\nEmail: ${auth.currentUser?.email}`)}
+              className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider underline"
+            >
+              Ver Info Usuario
+            </button>
           </div>
           {importError && (
             <div className="text-xs text-red-600 bg-red-50 p-2 rounded border border-red-100 max-w-xs">

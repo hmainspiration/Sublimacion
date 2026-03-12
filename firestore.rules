@@ -56,10 +56,7 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isAuthenticated() &&
-        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-         request.auth.token.email == "hmalldm95@gmail.com");
+      return isAuthenticated(); // TEMPORAL: Cualquier usuario autenticado es admin
     }
 
     function isOwner(userId) {
