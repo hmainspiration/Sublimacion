@@ -6,7 +6,7 @@ import { Plus, Edit2, Trash2, Image as ImageIcon, X, LogOut, CheckCircle, XCircl
 import { getImageUrl } from '../utils/imageHelper';
 import { db, auth, storage } from '../firebase';
 import { collection, getDocs, doc, deleteDoc, updateDoc, addDoc, query, orderBy, getDocFromServer } from 'firebase/firestore';
-import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 enum OperationType {
@@ -73,11 +73,15 @@ function AdminContent() {
     return await getDownloadURL(storageRef);
   };
 
-  // Login state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
 
-  const [activeTab, setActiveTab] = useState<'productos' | 'categorias' | 'colecciones' | 'pedidos'>('pedidos');
+  const [activeTab, setActiveTab] = useState<'productos' | 'categorias' | 'colecciones' | 'pedidos' | 'usuarios'>('pedidos');
+  const [users, setUsers] = useState<{id: string, email: string, role: string}[]>([]);
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [newUserEmail, setNewUserEmail] = useState('');
 
   const handleFirestoreError = (error: unknown, operationType: OperationType, path: string | null) => {
     const errInfo: FirestoreErrorInfo = {
@@ -126,13 +130,18 @@ function AdminContent() {
     return () => unsubscribe();
   }, []);
 
-  const handleLogin = async () => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoginError('');
     try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-    } catch (error) {
-      setLoginError('Error al iniciar sesión con Google');
+      await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
+    } catch (error: any) {
+      console.error('Login error:', error);
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        setLoginError('Correo o contraseña incorrectos');
+      } else {
+        setLoginError('Error al iniciar sesión. Verifica tu conexión.');
+      }
     }
   };
 
@@ -288,17 +297,19 @@ function AdminContent() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [catSnap, prodSnap, colSnap, pedSnap] = await Promise.all([
+      const [catSnap, prodSnap, colSnap, pedSnap, userSnap] = await Promise.all([
         getDocs(collection(db, 'categorias')),
         getDocs(collection(db, 'productos')),
         getDocs(collection(db, 'colecciones')),
-        getDocs(query(collection(db, 'pedidos'), orderBy('createdAt', 'desc')))
+        getDocs(query(collection(db, 'pedidos'), orderBy('createdAt', 'desc'))),
+        getDocs(collection(db, 'users'))
       ]);
 
       setCategorias(catSnap.docs.map(d => ({ id: d.id, ...d.data() } as Categoria)));
       setProductos(prodSnap.docs.map(d => ({ id: d.id, ...d.data() } as Producto)));
       setColecciones(colSnap.docs.map(d => ({ id: d.id, ...d.data() } as Coleccion)));
       setPedidos(pedSnap.docs.map(d => ({ id: d.id, ...d.data() } as Pedido)));
+      setUsers(userSnap.docs.map(d => ({ id: d.id, email: d.data().email, role: d.data().role })));
     } catch (err) {
       console.error('Error fetching admin data:', err);
     } finally {
@@ -446,6 +457,24 @@ function AdminContent() {
     }
   };
 
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newUserEmail) return;
+    try {
+      // Nota: Esto solo autoriza el correo en Firestore. 
+      // El usuario aún debe crear su cuenta con ese correo (o tú crearla en la consola).
+      await addDoc(collection(db, 'users'), {
+        email: newUserEmail.toLowerCase(),
+        role: 'admin'
+      });
+      setNewUserEmail('');
+      setIsUserModalOpen(false);
+      fetchData();
+    } catch (error) {
+      console.error('Error adding user', error);
+      alert('Error al autorizar usuario.');
+    }
+  };
   const updatePedidoEstado = async (id: string, estado: 'pendiente' | 'completado' | 'cancelado') => {
     try {
       await updateDoc(doc(db, 'pedidos', id), { estado });
@@ -465,21 +494,52 @@ function AdminContent() {
       >
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-stone-900">Acceso Administrador</h1>
-          <p className="text-stone-500 mt-2">Inicia sesión con tu cuenta de Google autorizada</p>
+          <p className="text-stone-500 mt-2">Ingresa tus credenciales para continuar</p>
         </div>
         
-        {loginError && (
-          <div className="p-3 mb-4 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
-            {loginError}
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-stone-700 mb-1">Correo Electrónico</label>
+            <input 
+              type="email" 
+              required
+              value={loginEmail}
+              onChange={e => setLoginEmail(e.target.value)}
+              className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-gold-500 focus:border-transparent outline-none"
+              placeholder="admin@ejemplo.com"
+            />
           </div>
-        )}
+          <div>
+            <label className="block text-sm font-medium text-stone-700 mb-1">Contraseña</label>
+            <input 
+              type="password" 
+              required
+              value={loginPassword}
+              onChange={e => setLoginPassword(e.target.value)}
+              className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-gold-500 focus:border-transparent outline-none"
+              placeholder="••••••••"
+            />
+          </div>
+
+          {loginError && (
+            <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
+              {loginError}
+            </div>
+          )}
+          
+          <button 
+            type="submit"
+            className="w-full py-3 bg-stone-900 hover:bg-stone-800 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+          >
+            Iniciar Sesión
+          </button>
+        </form>
         
-        <button 
-          onClick={handleLogin}
-          className="w-full py-3 bg-stone-900 hover:bg-stone-800 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-        >
-          Iniciar Sesión con Google
-        </button>
+        <div className="mt-6 text-center">
+          <p className="text-xs text-stone-400">
+            Si no tienes cuenta, contacta al administrador principal.
+          </p>
+        </div>
       </motion.div>
     );
   }
@@ -620,6 +680,16 @@ function AdminContent() {
           }`}
         >
           Colecciones
+        </button>
+        <button
+          onClick={() => setActiveTab('usuarios')}
+          className={`pb-3 px-2 text-sm font-medium transition-colors whitespace-nowrap ${
+            activeTab === 'usuarios' 
+              ? 'border-b-2 border-gold-500 text-gold-600' 
+              : 'text-stone-500 hover:text-stone-700'
+          }`}
+        >
+          Administradores
         </button>
       </div>
 
@@ -891,7 +961,102 @@ function AdminContent() {
         </div>
       )}
 
-      {/* Modals */}
+      {activeTab === 'usuarios' && (
+        <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+          <div className="flex justify-between items-center p-4 border-b border-stone-200 bg-stone-50">
+            <h3 className="font-semibold text-stone-900">Administradores Autorizados</h3>
+            <button 
+              onClick={() => setIsUserModalOpen(true)}
+              className="bg-stone-900 hover:bg-stone-800 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors text-sm"
+            >
+              <Plus className="h-4 w-4" />
+              Autorizar Correo
+            </button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-stone-200">
+              <thead className="bg-stone-50">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Correo Electrónico</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Rol</th>
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-stone-500 uppercase tracking-wider">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-stone-200">
+                {/* Super Admin Hardcoded */}
+                <tr className="bg-gold-50/30">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-stone-900">
+                    hmalldm95@gmail.com
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gold-100 text-gold-800">
+                      Super Admin (Sistema)
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-stone-400 italic">
+                    Protegido
+                  </td>
+                </tr>
+                {users.filter(u => u.email !== 'hmalldm95@gmail.com').map((user) => (
+                  <tr key={user.id} className="hover:bg-stone-50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-stone-900">
+                      {user.email}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-emerald-100 text-emerald-800">
+                        {user.role}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button onClick={() => handleDelete(user.id, 'users')} className="text-red-600 hover:text-red-900 transition-colors">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* User Modal */}
+      {isUserModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl shadow-xl max-w-md w-full flex flex-col overflow-hidden"
+          >
+            <div className="px-6 py-4 border-b border-stone-100 flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-stone-900">Autorizar Administrador</h3>
+              <button onClick={() => setIsUserModalOpen(false)} className="text-stone-400 hover:text-stone-600">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form onSubmit={handleAddUser} className="p-6 space-y-4">
+              <p className="text-sm text-stone-500">
+                Ingresa el correo de la persona que deseas autorizar. Esa persona deberá crear su cuenta con este mismo correo para poder acceder.
+              </p>
+              <div>
+                <label className="block text-sm font-medium text-stone-700 mb-1">Correo Electrónico</label>
+                <input 
+                  type="email" 
+                  required
+                  value={newUserEmail}
+                  onChange={e => setNewUserEmail(e.target.value)}
+                  placeholder="ejemplo@correo.com"
+                  className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-gold-500 outline-none"
+                />
+              </div>
+              <div className="pt-4 flex justify-end gap-3">
+                <button type="button" onClick={() => setIsUserModalOpen(false)} className="px-4 py-2 text-stone-600 hover:bg-stone-100 rounded-lg font-medium">Cancelar</button>
+                <button type="submit" className="px-4 py-2 bg-stone-900 hover:bg-stone-800 text-white rounded-lg font-medium">Autorizar</button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
           <motion.div 
