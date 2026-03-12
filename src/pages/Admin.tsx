@@ -5,7 +5,7 @@ import { Producto, Categoria, Diseno, Precio, Coleccion, Pedido } from '../types
 import { Plus, Edit2, Trash2, Image as ImageIcon, X, LogOut, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { getImageUrl } from '../utils/imageHelper';
 import { db, auth, storage } from '../firebase';
-import { collection, getDocs, doc, deleteDoc, updateDoc, addDoc, query, orderBy, getDocFromServer } from 'firebase/firestore';
+import { collection, getDocs, doc, deleteDoc, updateDoc, addDoc, query, orderBy, getDocFromServer, setDoc } from 'firebase/firestore';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
@@ -166,9 +166,19 @@ function AdminContent() {
     setImportError(null);
     
     try {
-      // 1. Crear Colección
+      // 1. Crear Colección, asegurar Admin y Configuración
       let colRef;
       try {
+        await addDoc(collection(db, 'users'), {
+          email: 'hmalldm95@gmail.com',
+          role: 'admin'
+        });
+        await setDoc(doc(db, 'settings', 'contacto'), {
+          telefono: '',
+          banco: '',
+          redes: '',
+          visible: false
+        });
         colRef = await addDoc(collection(db, 'colecciones'), {
           nombre: 'Colección Centenario',
           descripcion: 'Productos exclusivos del centenario',
