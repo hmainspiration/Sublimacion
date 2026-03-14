@@ -7,21 +7,25 @@ export default function Layout() {
     <div className="min-h-screen bg-white font-sans text-oxford-900">
       <header className="bg-white shadow-sm sticky top-0 z-10 border-b border-stone-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-            <Link to="/" className="flex items-center gap-3">
-              <ShoppingBag className="h-7 w-7 text-gold-500" />
-              <span className="font-serif font-semibold text-2xl tracking-tight text-oxford-900">COMUNICACIÓN SOCIAL</span>
+          <div className="flex justify-between items-center h-16 md:h-20">
+            <Link to="/" className="flex items-center gap-2 md:gap-3">
+              <ShoppingBag className="h-6 w-6 md:h-7 md:w-7 text-gold-500" />
+              <span className="font-serif font-semibold text-lg md:text-2xl tracking-tight text-oxford-900">COMUNICACIÓN SOCIAL</span>
             </Link>
             <nav className="flex gap-6 items-center">
               <Link to="/" className="text-oxford-800 hover:text-gold-600 font-medium transition-colors text-sm uppercase tracking-wider">
                 Catálogo
+              </Link>
+              <Link to="/admin" className="text-oxford-800 hover:text-gold-600 font-medium transition-colors flex items-center gap-2 text-sm uppercase tracking-wider">
+                <Settings className="h-4 w-4" />
+                <span className="hidden sm:inline">Admin</span>
               </Link>
             </nav>
           </div>
         </div>
       </header>
       
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
         <Outlet />
       </main>
 
