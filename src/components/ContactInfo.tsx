@@ -19,25 +19,27 @@ export default function ContactInfo() {
   if (!settings) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 bg-white p-4 rounded-xl shadow-lg border border-stone-200 flex flex-col gap-2">
-      {settings.telefono && (
-        <div className="flex items-center gap-2 text-sm text-stone-700">
-          <Phone className="h-4 w-4 text-emerald-600" />
-          <span>{settings.telefono}</span>
-        </div>
-      )}
-      {settings.banco && (
-        <div className="flex items-center gap-2 text-sm text-stone-700">
-          <Building2 className="h-4 w-4 text-emerald-600" />
-          <span>{settings.banco}</span>
-        </div>
-      )}
-      {settings.redes && (
-        <div className="flex items-center gap-2 text-sm text-stone-700">
-          <Share2 className="h-4 w-4 text-emerald-600" />
-          <span>{settings.redes}</span>
-        </div>
-      )}
+    <div className="bg-navy-900 text-stone-300 py-2 px-4 text-xs sm:text-sm border-b border-navy-800">
+      <div className="max-w-7xl mx-auto flex flex-wrap justify-center sm:justify-end items-center gap-4 sm:gap-6">
+        {settings.telefono && (
+          <div className="flex items-center gap-2">
+            <Phone className="h-3.5 w-3.5 text-gold-500" />
+            <span>{settings.telefono}</span>
+          </div>
+        )}
+        {settings.banco && (
+          <div className="flex items-center gap-2">
+            <Building2 className="h-3.5 w-3.5 text-gold-500" />
+            <span>{settings.banco}</span>
+          </div>
+        )}
+        {settings.redes && (
+          <div className="flex items-center gap-2">
+            <Share2 className="h-3.5 w-3.5 text-gold-500" />
+            <span>{settings.redes}</span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

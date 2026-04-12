@@ -73,9 +73,10 @@
         "estado": { "type": "string", "enum": ["pendiente", "completado", "cancelado"] },
         "createdAt": { "type": "timestamp" },
         "cliente_nombre": { "type": "string" },
+        "cliente_iglesia": { "type": "string" },
         "cliente_telefono": { "type": "string" }
       },
-      "required": ["producto_nombre", "cantidad", "total", "estado", "createdAt", "cliente_nombre", "cliente_telefono"]
+      "required": ["producto_nombre", "cantidad", "total", "estado", "createdAt", "cliente_nombre", "cliente_iglesia", "cliente_telefono"]
     },
     "User": {
       "title": "User",

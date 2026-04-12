@@ -13,6 +13,7 @@ export interface Categoria {
   nombre: string;
   imagen: string;
   coleccion_id?: string;
+  activa?: boolean;
 }
 
 export interface Diseno {
@@ -26,6 +27,7 @@ export interface Precio {
   descripcion: string;
   talla: string;
   precio: number;
+  stock?: number;
 }
 
 export interface Producto {
@@ -50,6 +52,19 @@ export interface Pedido {
   createdAt: any; // Firestore Timestamp
   cliente_nombre: string;
   cliente_telefono: string;
+}
+
+export interface CartItem {
+  id: string; // unique id for the cart item (e.g., timestamp)
+  producto_id: string;
+  producto_nombre: string;
+  producto_imagen: string;
+  diseno_nombre?: string;
+  diseno_codigo?: string;
+  opcion_descripcion?: string;
+  talla?: string;
+  precio_unitario: number;
+  cantidad: number;
 }
 
 export interface User {

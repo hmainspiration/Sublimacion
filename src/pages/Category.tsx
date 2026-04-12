@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Producto, Categoria } from '../types';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Search } from 'lucide-react';
 import { getImageUrl } from '../utils/imageHelper';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -12,6 +12,7 @@ export default function Category() {
   const [productos, setProductos] = useState<Producto[]>([]);
   const [categoria, setCategoria] = useState<Categoria | null>(null);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchCategoriaAndProductos = async () => {
@@ -21,7 +22,12 @@ export default function Category() {
         const docSnap = await getDoc(docRef);
         
         if (docSnap.exists()) {
-          setCategoria({ id: docSnap.id, ...docSnap.data() } as Categoria);
+          const catData = { id: docSnap.id, ...docSnap.data() } as Categoria;
+          if (catData.activa === false) {
+            window.location.href = catData.coleccion_id ? `/coleccion/${catData.coleccion_id}` : '/';
+            return;
+          }
+          setCategoria(catData);
         }
 
         const q = query(collection(db, 'productos'), where('categoria_id', '==', id));
@@ -41,6 +47,11 @@ export default function Category() {
     fetchCategoriaAndProductos();
   }, [id]);
 
+  const filteredProductos = productos.filter(p => 
+    p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.descripcion.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -54,25 +65,41 @@ export default function Category() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
+      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
     >
       <div className="mb-12 text-center">
-        <Link to={categoria?.coleccion_id ? `/coleccion/${categoria.coleccion_id}` : "/"} className="inline-flex items-center text-sm font-medium text-oxford-800 hover:text-gold-600 mb-6 transition-colors uppercase tracking-wider">
+        <Link to={categoria?.coleccion_id ? `/coleccion/${categoria.coleccion_id}` : "/"} className="inline-flex items-center text-sm font-medium text-navy-800 hover:text-gold-600 mb-6 transition-colors uppercase tracking-wider">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Volver a la colección
         </Link>
-        <h1 className="text-4xl md:text-5xl font-serif font-bold tracking-tight text-oxford-900">
+        <h1 className="text-4xl md:text-5xl font-serif font-bold tracking-tight text-navy-900">
           {categoria?.nombre}
         </h1>
-        <div className="w-16 h-1 bg-gold-500 mx-auto mt-6 rounded-full"></div>
+        <div className="w-16 h-1 bg-gold-500 mx-auto mt-6 rounded-full mb-8"></div>
+        
+        <div className="max-w-md mx-auto relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-stone-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Buscar productos..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="block w-full pl-10 pr-3 py-3 border border-stone-200 rounded-xl leading-5 bg-white placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-gold-500 focus:border-gold-500 transition-colors shadow-sm"
+          />
+        </div>
       </div>
 
-      {productos.length === 0 ? (
-        <div className="text-center py-16 bg-white border border-stone-100 shadow-sm">
-          <p className="text-oxford-800 text-lg font-light">No hay productos disponibles en esta categoría.</p>
+      {filteredProductos.length === 0 ? (
+        <div className="text-center py-16 bg-white border border-stone-100 shadow-sm rounded-2xl">
+          <p className="text-navy-800 text-lg font-light">
+            {searchTerm ? 'No se encontraron productos que coincidan con tu búsqueda.' : 'No hay productos disponibles en esta categoría.'}
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          {productos.map((producto, index) => (
+          {filteredProductos.map((producto, index) => (
             <motion.div
               key={producto.id}
               initial={{ opacity: 0, scale: 0.95 }}

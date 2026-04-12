@@ -16,6 +16,7 @@ export default function Product() {
   const [selectedSpecificSize, setSelectedSpecificSize] = useState<string>('');
   const [cantidad, setCantidad] = useState<number>(1);
   const [clienteNombre, setClienteNombre] = useState('');
+  const [clienteIglesia, setClienteIglesia] = useState('');
   const [clienteTelefono, setClienteTelefono] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
@@ -75,7 +76,7 @@ export default function Product() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
+      <div className="flex justify-center items-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gold-500"></div>
       </div>
     );
@@ -84,15 +85,15 @@ export default function Product() {
   if (!producto) {
     return (
       <div className="text-center py-16">
-        <h2 className="text-3xl font-serif font-bold text-oxford-900">Producto no encontrado</h2>
+        <h2 className="text-3xl font-serif font-bold text-navy-900">Producto no encontrado</h2>
         <Link to="/" className="text-gold-600 hover:text-gold-500 mt-6 inline-block uppercase tracking-wider text-sm font-medium">Volver al inicio</Link>
       </div>
     );
   }
 
   const handleRegisterOrder = async () => {
-    if (!clienteNombre || !clienteTelefono) {
-      alert('Por favor, ingresa tu nombre y teléfono para procesar el pedido.');
+    if (!clienteNombre || !clienteTelefono || !clienteIglesia) {
+      alert('Por favor, ingresa tu nombre, iglesia y teléfono para procesar el pedido.');
       return;
     }
 
@@ -111,56 +112,26 @@ export default function Product() {
         estado: 'pendiente',
         createdAt: serverTimestamp(),
         cliente_nombre: clienteNombre,
-        cliente_telefono: clienteTelefono
-      });
-
-      setOrderSuccess(true);
-      setTimeout(() => setOrderSuccess(false), 5000);
-    } catch (error) {
-      console.error('Error saving order:', error);
-      alert('Hubo un error al procesar tu pedido. Por favor, intenta nuevamente.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleWhatsAppClick = async () => {
-    if (!clienteNombre || !clienteTelefono) {
-      alert('Por favor, ingresa tu nombre y teléfono para procesar el pedido.');
-      return;
-    }
-
-    setIsSubmitting(true);
-    const total = selectedPrecio ? selectedPrecio.precio * cantidad : 0;
-    
-    try {
-      // Save order to Firestore
-      await addDoc(collection(db, 'pedidos'), {
-        producto_nombre: producto.nombre,
-        diseno_nombre: selectedDiseno ? `${selectedDiseno.nombre} (${selectedDiseno.codigo})` : null,
-        opcion_descripcion: selectedPrecio ? selectedPrecio.descripcion : null,
-        talla: selectedSpecificSize || selectedPrecio?.talla || null,
-        cantidad,
-        total,
-        estado: 'pendiente',
-        createdAt: serverTimestamp(),
-        cliente_nombre: clienteNombre,
+        cliente_iglesia: clienteIglesia,
         cliente_telefono: clienteTelefono
       });
 
       setOrderSuccess(true);
 
-      // Open WhatsApp
-      const message = `Hola, quiero ordenar:
-${cantidad}x ${producto.nombre}
-${selectedDiseno ? `Diseño/Retrato: ${selectedDiseno.nombre} (${selectedDiseno.codigo})` : ''}
+      // Open WhatsApp with order details
+      const message = `Hola, acabo de registrar un pedido:
+*${cantidad}x ${producto.nombre}*
+${selectedDiseno ? `Diseño: ${selectedDiseno.nombre} (${selectedDiseno.codigo})` : ''}
 ${selectedPrecio ? `Opción: ${selectedPrecio.descripcion}` : ''}
 ${selectedPrecio?.talla ? `Talla/Rango: ${selectedPrecio.talla}` : ''}
 ${selectedSpecificSize ? `Talla Exacta: ${selectedSpecificSize}` : ''}
+
+*Datos del Cliente:*
 Nombre: ${clienteNombre}
+Iglesia: ${clienteIglesia}
 Teléfono: ${clienteTelefono}
 
-Total: C$${total}`;
+*Total: C$${total}*`;
 
       const encodedMessage = encodeURIComponent(message);
       window.open(`https://wa.me/50557693382?text=${encodedMessage}`, '_blank');
@@ -174,6 +145,12 @@ Total: C$${total}`;
     }
   };
 
+  const handleContactar = () => {
+    const message = `Hola, me gustaría obtener más información sobre el producto: ${producto.nombre}.`;
+    const encodedMessage = encodeURIComponent(message);
+    window.open(`https://wa.me/50557693382?text=${encodedMessage}`, '_blank');
+  };
+
   const displayImage = selectedDiseno?.imagen || producto.imagen;
   const total = selectedPrecio ? selectedPrecio.precio * cantidad : 0;
 
@@ -184,61 +161,72 @@ Total: C$${total}`;
       transition={{ duration: 0.5 }}
       className="max-w-7xl mx-auto"
     >
-      <Link to={`/categoria/${producto.categoria_id}`} className="inline-flex items-center text-sm font-medium text-oxford-800 hover:text-gold-600 mb-8 transition-colors uppercase tracking-wider">
+      <Link to={`/coleccion/${producto.categoria_id}`} className="inline-flex items-center text-sm font-medium text-navy-800 hover:text-gold-600 mb-6 transition-colors uppercase tracking-wider">
         <ArrowLeft className="mr-2 h-4 w-4" />
-        Volver a la categoría
+        Volver
       </Link>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 relative">
         
-        {/* Left Column: Image and Details */}
-        <div className="lg:col-span-7 space-y-8">
-          <div className="bg-white border border-stone-100 p-4 shadow-sm">
-            <div className="aspect-w-4 aspect-h-5 overflow-hidden bg-stone-50">
-              <img 
-                src={getImageUrl(displayImage)} 
-                alt={producto.nombre}
-                className="w-full h-full object-cover object-center"
-                referrerPolicy="no-referrer"
-              />
+        {/* Left Column: Image (Sticky on Mobile & Desktop) */}
+        <div className="lg:col-span-6">
+          <div className="sticky top-20 z-30 bg-white/80 backdrop-blur-md pb-4 lg:pb-0 lg:bg-transparent lg:backdrop-blur-none">
+            <div className="bg-white border border-stone-100 p-2 lg:p-4 shadow-sm rounded-2xl">
+              <div className="aspect-w-1 aspect-h-1 lg:aspect-w-4 lg:aspect-h-5 overflow-hidden bg-stone-50 rounded-xl">
+                <img 
+                  src={getImageUrl(displayImage)} 
+                  alt={producto.nombre}
+                  className="w-full h-full object-contain object-center transition-opacity duration-300"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
             </div>
           </div>
           
-          <div className="bg-white border border-stone-100 p-8 shadow-sm">
-            <h1 className="text-3xl md:text-4xl font-serif font-bold text-oxford-900 mb-6">{producto.nombre}</h1>
+          <div className="bg-white border border-stone-100 p-6 lg:p-8 shadow-sm rounded-2xl mt-6 hidden lg:block">
+            <h1 className="text-3xl md:text-4xl font-serif font-bold text-navy-900 mb-6">{producto.nombre}</h1>
             <div className="prose prose-stone max-w-none">
-              <p className="text-oxford-800 text-lg font-light leading-relaxed">{producto.descripcion}</p>
+              <p className="text-stone-600 text-lg font-light leading-relaxed">{producto.descripcion}</p>
             </div>
           </div>
         </div>
 
         {/* Right Column: Configurator and Cart */}
-        <div className="lg:col-span-5">
-          <div className="sticky top-28 space-y-8">
+        <div className="lg:col-span-6">
+          <div className="space-y-6 lg:space-y-8">
             
+            {/* Mobile Title & Description */}
+            <div className="bg-white border border-stone-100 p-6 shadow-sm rounded-2xl lg:hidden">
+              <h1 className="text-2xl font-serif font-bold text-navy-900 mb-4">{producto.nombre}</h1>
+              <p className="text-stone-600 text-base font-light leading-relaxed">{producto.descripcion}</p>
+            </div>
+
             {/* Configurator */}
-            <div className="bg-white border border-stone-100 p-8 shadow-sm">
-              <h2 className="text-2xl font-serif font-bold text-oxford-900 mb-6 border-b border-stone-100 pb-4">Configura tu pedido</h2>
+            <div className="bg-white border border-stone-100 p-6 lg:p-8 shadow-sm rounded-2xl">
+              <h2 className="text-xl lg:text-2xl font-serif font-bold text-navy-900 mb-6 border-b border-stone-100 pb-4">Configura tu pedido</h2>
               
               {/* Step 1: Designs */}
               {producto.disenos && producto.disenos.length > 0 && (
                 <div className="mb-8">
-                  <h3 className="text-xs font-bold text-oxford-800 uppercase tracking-widest mb-4">1. Selecciona el Diseño / Retrato</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {producto.disenos.map(diseno => (
-                      <button
-                        key={diseno.id}
-                        onClick={() => setSelectedDiseno(diseno)}
-                        className={`px-4 py-3 text-sm font-medium transition-all duration-200 border flex items-center justify-between ${
-                          selectedDiseno?.id === diseno.id 
-                            ? 'border-gold-500 bg-gold-50 text-oxford-900' 
-                            : 'border-stone-200 bg-white text-oxford-800 hover:border-gold-300'
-                        }`}
-                      >
-                        <span className="truncate pr-2">{diseno.nombre}</span>
-                        {selectedDiseno?.id === diseno.id && <CheckCircle2 className="h-4 w-4 text-gold-600 flex-shrink-0" />}
-                      </button>
-                    ))}
+                  <h3 className="text-xs font-bold text-navy-800 uppercase tracking-widest mb-4">1. Selecciona el Diseño</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-2 gap-3">
+                    {producto.disenos.map((diseno, index) => {
+                      const isSelected = selectedDiseno?.codigo === diseno.codigo && selectedDiseno?.nombre === diseno.nombre;
+                      return (
+                        <button
+                          key={`${diseno.codigo}-${diseno.nombre}-${index}`}
+                          onClick={() => setSelectedDiseno(diseno)}
+                          className={`px-3 py-3 text-xs sm:text-sm font-medium transition-all duration-200 border rounded-xl flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-2 text-center sm:text-left ${
+                            isSelected 
+                              ? 'border-gold-500 bg-gold-50 text-navy-900 shadow-md' 
+                              : 'border-stone-200 bg-white text-stone-600 hover:border-gold-300'
+                          }`}
+                        >
+                          <span className="truncate w-full">{diseno.nombre}</span>
+                          {isSelected && <CheckCircle2 className="h-4 w-4 text-gold-600 flex-shrink-0 hidden sm:block" />}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -246,35 +234,47 @@ Total: C$${total}`;
               {/* Step 2: Options/Prices */}
               {producto.precios && producto.precios.length > 0 && (
                 <div className="mb-8">
-                  <h3 className="text-xs font-bold text-oxford-800 uppercase tracking-widest mb-4">
+                  <h3 className="text-xs font-bold text-navy-800 uppercase tracking-widest mb-4">
                     {producto.disenos && producto.disenos.length > 0 ? '2.' : '1.'} Opciones y Precios
                   </h3>
                   <div className="space-y-3">
-                    {producto.precios.map(precio => (
-                      <button
-                        key={precio.id}
-                        onClick={() => setSelectedPrecio(precio)}
-                        className={`w-full text-left px-5 py-4 transition-all duration-200 border flex justify-between items-center ${
-                          selectedPrecio?.id === precio.id 
-                            ? 'border-gold-500 bg-gold-50' 
-                            : 'border-stone-200 bg-white hover:border-gold-300'
-                        }`}
-                      >
-                        <div>
-                          <div className={`font-medium ${selectedPrecio?.id === precio.id ? 'text-oxford-900' : 'text-oxford-800'}`}>
-                            {precio.descripcion}
-                          </div>
-                          {precio.talla && (
-                            <div className="text-xs text-oxford-800 mt-1 uppercase tracking-wider opacity-80">
-                              {precio.talla}
+                    {producto.precios.map((precio, index) => {
+                      const isSelected = selectedPrecio?.descripcion === precio.descripcion && selectedPrecio?.talla === precio.talla;
+                      const isAgotado = precio.stock !== undefined && precio.stock <= 0;
+                      return (
+                        <button
+                          key={`${precio.descripcion}-${precio.talla}-${index}`}
+                          onClick={() => !isAgotado && setSelectedPrecio(precio)}
+                          disabled={isAgotado}
+                          className={`w-full text-left px-5 py-4 transition-all duration-200 border rounded-xl flex justify-between items-center ${
+                            isAgotado 
+                              ? 'border-stone-100 bg-stone-50 opacity-60 cursor-not-allowed'
+                              : isSelected 
+                                ? 'border-gold-500 bg-gold-50 shadow-md' 
+                                : 'border-stone-200 bg-white hover:border-gold-300'
+                          }`}
+                        >
+                          <div>
+                            <div className={`font-medium ${isSelected && !isAgotado ? 'text-navy-900' : 'text-stone-700'}`}>
+                              {precio.descripcion}
                             </div>
-                          )}
-                        </div>
-                        <div className={`text-xl font-sans font-bold tracking-tight ${selectedPrecio?.id === precio.id ? 'text-gold-600' : 'text-oxford-900'}`}>
-                          C${precio.precio}
-                        </div>
-                      </button>
-                    ))}
+                            {precio.talla && (
+                              <div className="text-xs text-stone-500 mt-1 uppercase tracking-wider">
+                                {precio.talla}
+                              </div>
+                            )}
+                            {isAgotado && (
+                              <div className="text-xs text-red-500 mt-1 font-medium">
+                                Agotado
+                              </div>
+                            )}
+                          </div>
+                          <div className={`text-xl font-sans font-bold tracking-tight ${isSelected && !isAgotado ? 'text-gold-600' : 'text-navy-900'}`}>
+                            C${precio.precio}
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -282,7 +282,7 @@ Total: C$${total}`;
               {/* Step 3: Specific Size */}
               {selectedPrecio && getSpecificSizes(selectedPrecio.talla) && (
                 <div className="mb-8">
-                  <h3 className="text-xs font-bold text-oxford-800 uppercase tracking-widest mb-4">
+                  <h3 className="text-xs font-bold text-navy-800 uppercase tracking-widest mb-4">
                     Selecciona la talla exacta
                   </h3>
                   <div className="flex flex-wrap gap-2">
@@ -290,10 +290,10 @@ Total: C$${total}`;
                       <button
                         key={size}
                         onClick={() => setSelectedSpecificSize(size)}
-                        className={`w-12 h-12 flex items-center justify-center text-sm font-medium transition-all duration-200 border ${
+                        className={`w-12 h-12 rounded-xl flex items-center justify-center text-sm font-medium transition-all duration-200 border ${
                           selectedSpecificSize === size 
-                            ? 'border-gold-500 bg-gold-500 text-white' 
-                            : 'border-stone-200 bg-white text-oxford-800 hover:border-gold-300'
+                            ? 'border-gold-500 bg-gold-500 text-white shadow-md' 
+                            : 'border-stone-200 bg-white text-stone-700 hover:border-gold-300'
                         }`}
                       >
                         {size}
@@ -305,58 +305,30 @@ Total: C$${total}`;
 
               {/* Step 4: Quantity */}
               <div className="mb-2">
-                <h3 className="text-xs font-bold text-oxford-800 uppercase tracking-widest mb-4">Cantidad</h3>
+                <h3 className="text-xs font-bold text-navy-800 uppercase tracking-widest mb-4">Cantidad</h3>
                 <div className="flex items-center space-x-4">
                   <button 
                     onClick={() => setCantidad(Math.max(1, cantidad - 1))}
-                    className="w-10 h-10 border border-stone-300 flex items-center justify-center text-oxford-800 hover:bg-stone-50 hover:border-stone-400 transition-colors"
+                    className="w-12 h-12 rounded-full border border-stone-300 flex items-center justify-center text-stone-600 hover:bg-stone-50 hover:border-stone-400 transition-colors"
                   >
                     -
                   </button>
-                  <span className="text-xl font-sans font-semibold text-oxford-900 w-8 text-center">{cantidad}</span>
+                  <span className="text-2xl font-sans font-semibold text-navy-900 w-12 text-center">{cantidad}</span>
                   <button 
                     onClick={() => setCantidad(cantidad + 1)}
-                    className="w-10 h-10 border border-stone-300 flex items-center justify-center text-oxford-800 hover:bg-stone-50 hover:border-stone-400 transition-colors"
+                    className="w-12 h-12 rounded-full border border-stone-300 flex items-center justify-center text-stone-600 hover:bg-stone-50 hover:border-stone-400 transition-colors"
                   >
                     +
                   </button>
                 </div>
               </div>
-              {/* Step 5: Client Info */}
-              <div className="mb-2">
-                <h3 className="text-xs font-bold text-oxford-800 uppercase tracking-widest mb-4">Datos del Cliente</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-oxford-800 mb-1">Nombre Completo</label>
-                    <input 
-                      type="text" 
-                      value={clienteNombre}
-                      onChange={(e) => setClienteNombre(e.target.value)}
-                      className="w-full px-4 py-2 border border-stone-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gold-500"
-                      placeholder="Ej. Juan Pérez"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-oxford-800 mb-1">Teléfono (WhatsApp)</label>
-                    <input 
-                      type="tel" 
-                      value={clienteTelefono}
-                      onChange={(e) => setClienteTelefono(e.target.value)}
-                      className="w-full px-4 py-2 border border-stone-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gold-500"
-                      placeholder="Ej. +505 8888 8888"
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
             </div>
 
             {/* Cart Summary */}
-            <div className="bg-oxford-900 text-white p-8 shadow-lg">
-              <div className="flex items-center gap-3 mb-6 border-b border-oxford-800 pb-4">
+            <div className="bg-navy-900 text-white p-6 lg:p-8 rounded-2xl shadow-xl">
+              <div className="flex items-center gap-3 mb-6 border-b border-navy-800 pb-4">
                 <ShoppingCart className="h-6 w-6 text-gold-500" />
-                <h2 className="text-xl font-serif font-bold">Resumen de Pedido</h2>
+                <h2 className="text-xl font-serif font-bold">Resumen de Selección</h2>
               </div>
               
               <div className="space-y-4 mb-8 text-sm font-light text-stone-300">
@@ -366,7 +338,7 @@ Total: C$${total}`;
                 </div>
                 {selectedDiseno && (
                   <div className="flex justify-between">
-                    <span className="font-medium text-white">Diseño/Retrato:</span>
+                    <span className="font-medium text-white">Diseño:</span>
                     <span className="text-right">{selectedDiseno.nombre}</span>
                   </div>
                 )}
@@ -394,8 +366,8 @@ Total: C$${total}`;
                 )}
               </div>
 
-              <div className="flex items-center justify-between mb-8 pt-6 border-t border-oxford-800">
-                <span className="text-lg font-medium text-gold-400">Total a Pagar</span>
+              <div className="flex items-center justify-between mb-8 pt-6 border-t border-navy-800">
+                <span className="text-lg font-medium text-gold-400">Subtotal</span>
                 <span className="text-3xl font-sans font-bold tracking-tight text-gold-500">
                   C${total}
                 </span>
@@ -403,35 +375,18 @@ Total: C$${total}`;
               
               <div className="grid grid-cols-1 gap-4">
                 <button 
-                  onClick={handleRegisterOrder}
-                  disabled={isSubmitting}
-                  className={`w-full font-bold py-4 px-8 shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-center gap-3 text-sm uppercase tracking-wider ${
-                    orderSuccess 
-                      ? 'bg-green-500 hover:bg-green-600 text-white' 
-                      : 'bg-stone-900 hover:bg-stone-800 text-white'
-                  } ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  onClick={handleAddToCart}
+                  className="w-full font-bold py-4 px-8 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-3 text-sm uppercase tracking-wider bg-gold-500 hover:bg-gold-600 text-navy-900"
                 >
-                  {isSubmitting ? (
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  ) : orderSuccess ? (
-                    <>
-                      <CheckCircle2 className="h-5 w-5" />
-                      ¡Pedido Registrado!
-                    </>
-                  ) : (
-                    <>
-                      <ShoppingCart className="h-5 w-5" />
-                      Registrar Pedido
-                    </>
-                  )}
+                  <ShoppingCart className="h-5 w-5" />
+                  Añadir al Carrito
                 </button>
                 <button 
-                  onClick={handleWhatsAppClick}
-                  disabled={isSubmitting}
-                  className={`w-full font-bold py-4 px-8 shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-center gap-3 text-sm uppercase tracking-wider bg-emerald-500 hover:bg-emerald-600 text-white ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  onClick={handleContactar}
+                  className="w-full font-bold py-4 px-8 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-3 text-sm uppercase tracking-wider bg-stone-800 hover:bg-stone-700 text-white"
                 >
                   <MessageCircle className="h-5 w-5" />
-                  Pedir por WhatsApp
+                  Consultar por WhatsApp
                 </button>
               </div>
             </div>
