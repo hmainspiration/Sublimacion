@@ -924,50 +924,80 @@ function AdminContent() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
-            <h3 className="text-lg font-bold text-navy-900 mb-4">Últimos Pedidos</h3>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-stone-200">
-                <thead className="bg-stone-50">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Fecha</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Cliente</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Total</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Estado</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-stone-200">
-                  {pedidos.slice(0, 5).map((pedido) => (
-                    <tr key={pedido.id} className="hover:bg-stone-50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-stone-500">
-                        {pedido.createdAt?.toDate ? pedido.createdAt.toDate().toLocaleDateString() : 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-stone-900">{pedido.cliente_nombre}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-stone-900 font-medium">
-                        C${pedido.total}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          pedido.estado === 'completado' ? 'bg-green-100 text-green-800' : 
-                          pedido.estado === 'cancelado' ? 'bg-red-100 text-red-800' : 
-                          'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {pedido.estado}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                  {pedidos.length === 0 && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
+              <h3 className="text-lg font-bold text-navy-900 mb-4">Últimos Pedidos</h3>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-stone-200">
+                  <thead className="bg-stone-50">
                     <tr>
-                      <td colSpan={4} className="px-6 py-4 text-center text-sm text-stone-500">
-                        No hay pedidos recientes.
-                      </td>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Fecha</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Cliente</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Total</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Estado</th>
                     </tr>
-                  )}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-stone-200">
+                    {pedidos.slice(0, 5).map((pedido) => (
+                      <tr key={pedido.id} className="hover:bg-stone-50 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-stone-500">
+                          {pedido.createdAt?.toDate ? pedido.createdAt.toDate().toLocaleDateString() : 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-stone-900">{pedido.cliente_nombre}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-stone-900 font-medium">
+                          C${pedido.total}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            pedido.estado === 'completado' ? 'bg-green-100 text-green-800' : 
+                            pedido.estado === 'cancelado' ? 'bg-red-100 text-red-800' : 
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {pedido.estado}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                    {pedidos.length === 0 && (
+                      <tr>
+                        <td colSpan={4} className="px-6 py-4 text-center text-sm text-stone-500">
+                          No hay pedidos recientes.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
+              <h3 className="text-lg font-bold text-navy-900 mb-4">Productos más Vendidos</h3>
+              <div className="space-y-4">
+                {Object.entries(
+                  pedidos.reduce((acc: Record<string, number>, curr) => {
+                    acc[curr.producto_nombre] = (acc[curr.producto_nombre] || 0) + curr.cantidad;
+                    return acc;
+                  }, {})
+                )
+                  .sort((a, b) => b[1] - a[1])
+                  .slice(0, 5)
+                  .map(([nombre, cantidad], index) => (
+                    <div key={nombre} className="flex items-center justify-between p-3 bg-stone-50 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <span className="w-6 h-6 flex items-center justify-center bg-navy-900 text-white text-xs font-bold rounded-full">
+                          {index + 1}
+                        </span>
+                        <span className="text-sm font-medium text-navy-900">{nombre}</span>
+                      </div>
+                      <span className="text-sm font-bold text-gold-600">{cantidad} unidades</span>
+                    </div>
+                  ))}
+                {pedidos.length === 0 && (
+                  <p className="text-center text-sm text-stone-500 py-4">No hay datos de ventas aún.</p>
+                )}
+              </div>
             </div>
           </div>
         </div>

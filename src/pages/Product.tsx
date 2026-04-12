@@ -2,24 +2,21 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Producto, Precio, Diseno } from '../types';
-import { ArrowLeft, MessageCircle, CheckCircle2, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, MessageCircle, CheckCircle2, ShoppingCart, Plus, Minus } from 'lucide-react';
 import { getImageUrl } from '../utils/imageHelper';
-import { doc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import { useCart } from '../context/CartContext';
 
 export default function Product() {
   const { id } = useParams<{ id: string }>();
+  const { addToCart } = useCart();
   const [producto, setProducto] = useState<Producto | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedDiseno, setSelectedDiseno] = useState<Diseno | null>(null);
   const [selectedPrecio, setSelectedPrecio] = useState<Precio | null>(null);
   const [selectedSpecificSize, setSelectedSpecificSize] = useState<string>('');
   const [cantidad, setCantidad] = useState<number>(1);
-  const [clienteNombre, setClienteNombre] = useState('');
-  const [clienteIglesia, setClienteIglesia] = useState('');
-  const [clienteTelefono, setClienteTelefono] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [orderSuccess, setOrderSuccess] = useState(false);
 
   const getSpecificSizes = (talla: string): string[] | null => {
     if (!talla) return null;
@@ -91,58 +88,23 @@ export default function Product() {
     );
   }
 
-  const handleRegisterOrder = async () => {
-    if (!clienteNombre || !clienteTelefono || !clienteIglesia) {
-      alert('Por favor, ingresa tu nombre, iglesia y teléfono para procesar el pedido.');
+  const handleAddToCart = () => {
+    if (!producto || !selectedPrecio) {
+      alert('Por favor, selecciona una opción/precio antes de añadir al carrito.');
       return;
     }
 
-    setIsSubmitting(true);
-    const total = selectedPrecio ? selectedPrecio.precio * cantidad : 0;
-    
-    try {
-      // Save order to Firestore
-      await addDoc(collection(db, 'pedidos'), {
-        producto_nombre: producto.nombre,
-        diseno_nombre: selectedDiseno ? `${selectedDiseno.nombre} (${selectedDiseno.codigo})` : null,
-        opcion_descripcion: selectedPrecio ? selectedPrecio.descripcion : null,
-        talla: selectedSpecificSize || selectedPrecio?.talla || null,
-        cantidad,
-        total,
-        estado: 'pendiente',
-        createdAt: serverTimestamp(),
-        cliente_nombre: clienteNombre,
-        cliente_iglesia: clienteIglesia,
-        cliente_telefono: clienteTelefono
-      });
-
-      setOrderSuccess(true);
-
-      // Open WhatsApp with order details
-      const message = `Hola, acabo de registrar un pedido:
-*${cantidad}x ${producto.nombre}*
-${selectedDiseno ? `Diseño: ${selectedDiseno.nombre} (${selectedDiseno.codigo})` : ''}
-${selectedPrecio ? `Opción: ${selectedPrecio.descripcion}` : ''}
-${selectedPrecio?.talla ? `Talla/Rango: ${selectedPrecio.talla}` : ''}
-${selectedSpecificSize ? `Talla Exacta: ${selectedSpecificSize}` : ''}
-
-*Datos del Cliente:*
-Nombre: ${clienteNombre}
-Iglesia: ${clienteIglesia}
-Teléfono: ${clienteTelefono}
-
-*Total: C$${total}*`;
-
-      const encodedMessage = encodeURIComponent(message);
-      window.open(`https://wa.me/50557693382?text=${encodedMessage}`, '_blank');
-      
-      setTimeout(() => setOrderSuccess(false), 5000);
-    } catch (error) {
-      console.error('Error saving order:', error);
-      alert('Hubo un error al procesar tu pedido. Por favor, intenta nuevamente.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    addToCart({
+      producto_id: producto.id,
+      producto_nombre: producto.nombre,
+      producto_imagen: selectedDiseno?.imagen || producto.imagen,
+      diseno_nombre: selectedDiseno?.nombre,
+      diseno_codigo: selectedDiseno?.codigo,
+      opcion_descripcion: selectedPrecio.descripcion,
+      talla: selectedSpecificSize || selectedPrecio.talla,
+      precio_unitario: selectedPrecio.precio,
+      cantidad: cantidad
+    });
   };
 
   const handleContactar = () => {
