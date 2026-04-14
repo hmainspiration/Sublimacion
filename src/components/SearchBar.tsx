@@ -69,7 +69,7 @@ export default function SearchBar() {
               onClick={() => { setIsOpen(false); setQuery(''); }}
               className="flex items-center gap-3 p-3 hover:bg-stone-50 transition-colors border-b border-stone-50 last:border-0"
             >
-              <img src={prod.imagen} alt={prod.nombre} className="w-12 h-12 object-cover rounded-md" />
+              <img src={prod.imagen} alt={prod.nombre} loading="lazy" className="w-12 h-12 object-cover rounded-md" />
               <div>
                 <p className="font-medium text-sm text-navy-900">{prod.nombre}</p>
                 <p className="text-xs text-stone-500 line-clamp-1">{prod.descripcion}</p>

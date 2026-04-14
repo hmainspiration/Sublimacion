@@ -38,9 +38,14 @@ export default function Home() {
   const handleCollectionClick = (coleccion: Coleccion, e: React.MouseEvent) => {
     e.preventDefault();
     if (coleccion.requiere_codigo || coleccion.codigo_acceso) {
-      setSelectedColeccion(coleccion);
-      setAccessCode('');
-      setError('');
+      const storedCode = localStorage.getItem(`access_${coleccion.id}`);
+      if (storedCode === coleccion.codigo_acceso) {
+        navigate(`/coleccion/${coleccion.id}`);
+      } else {
+        setSelectedColeccion(coleccion);
+        setAccessCode('');
+        setError('');
+      }
     } else {
       navigate(`/coleccion/${coleccion.id}`);
     }
@@ -51,7 +56,7 @@ export default function Home() {
     if (!selectedColeccion) return;
 
     if (accessCode === selectedColeccion.codigo_acceso) {
-      sessionStorage.setItem(`access_${selectedColeccion.id}`, 'true');
+      localStorage.setItem(`access_${selectedColeccion.id}`, accessCode);
       navigate(`/coleccion/${selectedColeccion.id}`);
     } else {
       setError('Código incorrecto');

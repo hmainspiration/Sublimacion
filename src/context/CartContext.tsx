@@ -1,9 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { CartItem } from '../types';
 
+export interface ClienteData {
+  nombre: string;
+  telefono: string;
+  iglesia?: string;
+}
+
 interface CartContextType {
   cartItems: CartItem[];
-  addToCart: (item: Omit<CartItem, 'id'>) => void;
+  addToCart: (item: Omit<CartItem, 'id'>) => string;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, cantidad: number) => void;
   clearCart: () => void;
@@ -11,6 +17,9 @@ interface CartContextType {
   cartCount: number;
   isCartOpen: boolean;
   setIsCartOpen: (isOpen: boolean) => void;
+  clienteData: ClienteData | null;
+  setClienteData: (data: ClienteData | null) => void;
+  updateCartItemDbId: (id: string, dbId: string) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -21,12 +30,25 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return savedCart ? JSON.parse(savedCart) : [];
   });
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [clienteData, setClienteData] = useState<ClienteData | null>(() => {
+    const saved = localStorage.getItem('clienteData');
+    return saved ? JSON.parse(saved) : null;
+  });
 
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cartItems));
   }, [cartItems]);
 
+  useEffect(() => {
+    if (clienteData) {
+      localStorage.setItem('clienteData', JSON.stringify(clienteData));
+    } else {
+      localStorage.removeItem('clienteData');
+    }
+  }, [clienteData]);
+
   const addToCart = (item: Omit<CartItem, 'id'>) => {
+    const newItemId = Date.now().toString();
     setCartItems(prev => {
       // Check if identical item exists (same product, design, option, size)
       const existingItemIndex = prev.findIndex(
@@ -42,9 +64,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return newItems;
       }
 
-      return [...prev, { ...item, id: Date.now().toString() }];
+      return [...prev, { ...item, id: newItemId }];
     });
     setIsCartOpen(true);
+    return newItemId;
   };
 
   const removeFromCart = (id: string) => {
@@ -57,6 +80,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     setCartItems(prev => prev.map(item => item.id === id ? { ...item, cantidad } : item));
+  };
+
+  const updateCartItemDbId = (id: string, dbId: string) => {
+    setCartItems(prev => prev.map(item => item.id === id ? { ...item, dbId } : item));
   };
 
   const clearCart = () => {
@@ -76,7 +103,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       cartTotal,
       cartCount,
       isCartOpen,
-      setIsCartOpen
+      setIsCartOpen,
+      clienteData,
+      setClienteData,
+      updateCartItemDbId
     }}>
       {children}
     </CartContext.Provider>

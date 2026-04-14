@@ -4,6 +4,7 @@ import ContactInfo from './ContactInfo';
 import SearchBar from './SearchBar';
 import Cart from './Cart';
 import { useCart } from '../context/CartContext';
+import { getWhatsAppLink } from '../utils/contact';
 
 export default function Layout() {
   const { cartCount, setIsCartOpen } = useCart();
@@ -65,7 +66,7 @@ export default function Layout() {
           </p>
 
           <a 
-            href="https://wa.me/50557693382" 
+            href={getWhatsAppLink()} 
             target="_blank" 
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 bg-[#25D366] hover:bg-[#20bd5a] text-white px-6 py-3 rounded-full font-medium transition-all duration-300 hover:scale-105 mb-12 shadow-lg"
@@ -87,6 +88,7 @@ export default function Layout() {
               <img 
                 src="https://raw.githubusercontent.com/hmainspiration/imagenes-tienda/main/Logo%20HMA.png" 
                 alt="HMA Inspiration" 
+                loading="lazy"
                 className="h-6 w-auto object-contain filter grayscale hover:grayscale-0 transition-all duration-300"
                 referrerPolicy="no-referrer"
               />

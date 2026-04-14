@@ -30,8 +30,8 @@ export default function Coleccion() {
         const currentCol = { id: docSnap.id, ...docSnap.data() } as ColeccionType;
         
         if (currentCol.requiere_codigo || currentCol.codigo_acceso) {
-          const hasAccess = sessionStorage.getItem(`access_${id}`);
-          if (!hasAccess) {
+          const storedCode = localStorage.getItem(`access_${id}`);
+          if (storedCode !== currentCol.codigo_acceso) {
             navigate('/');
             return;
           }
@@ -133,6 +133,7 @@ export default function Coleccion() {
                   <img 
                     src={getImageUrl(categoria.imagen)} 
                     alt={categoria.nombre}
+                    loading="lazy"
                     className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-700 ease-in-out"
                     referrerPolicy="no-referrer"
                   />

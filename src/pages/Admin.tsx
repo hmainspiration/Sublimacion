@@ -975,12 +975,12 @@ function AdminContent() {
             <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
               <h3 className="text-lg font-bold text-navy-900 mb-4">Productos más Vendidos</h3>
               <div className="space-y-4">
-                {Object.entries(
+                {(Object.entries(
                   pedidos.reduce((acc: Record<string, number>, curr) => {
                     acc[curr.producto_nombre] = (acc[curr.producto_nombre] || 0) + curr.cantidad;
                     return acc;
                   }, {})
-                )
+                ) as [string, number][])
                   .sort((a, b) => b[1] - a[1])
                   .slice(0, 5)
                   .map(([nombre, cantidad], index) => (
@@ -1583,7 +1583,7 @@ function AdminContent() {
                   <label className="block text-sm font-medium text-stone-700">Opciones y Precios</label>
                   <button 
                     type="button"
-                    onClick={() => setProductPrecios([...productPrecios, { descripcion: '', talla: '', precio: 0, stock: 0 }])}
+                    onClick={() => setProductPrecios([...productPrecios, { descripcion: '', talla: '', precio: 0 }])}
                     className="text-xs bg-stone-100 hover:bg-stone-200 text-stone-700 px-2 py-1 rounded flex items-center gap-1"
                   >
                     <Plus className="h-3 w-3" /> Agregar Opción
@@ -1625,18 +1625,6 @@ function AdminContent() {
                         }}
                         className="w-20 px-2 py-1.5 border border-stone-300 rounded focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
                       />
-                      <input 
-                        type="number" 
-                        placeholder="Stock"
-                        value={precio.stock === undefined ? '' : precio.stock}
-                        onChange={e => {
-                          const newPrecios = [...productPrecios];
-                          newPrecios[index].stock = parseInt(e.target.value) || 0;
-                          setProductPrecios(newPrecios);
-                        }}
-                        className="w-20 px-2 py-1.5 border border-stone-300 rounded focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
-                        title="Inventario disponible"
-                      />
                       <button 
                         type="button"
                         onClick={() => {
@@ -1662,7 +1650,7 @@ function AdminContent() {
                   <label className="block text-sm font-medium text-stone-700">Diseños / Retratos</label>
                   <button 
                     type="button"
-                    onClick={() => setSelectedDisenos([...selectedDisenos, { id: Date.now().toString(), nombre: '', codigo: '', imagen: '' }])}
+                    onClick={() => setSelectedDisenos([...selectedDisenos, { id: Date.now().toString(), nombre: '', codigo: '', imagen: '', stock: 0 }])}
                     className="text-xs bg-stone-100 hover:bg-stone-200 text-stone-700 px-2 py-1 rounded flex items-center gap-1"
                   >
                     <Plus className="h-3 w-3" /> Agregar Diseño
@@ -1703,6 +1691,18 @@ function AdminContent() {
                           setSelectedDisenos(newDisenos);
                         }}
                         className="flex-1 px-2 py-1.5 border border-stone-300 rounded focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
+                      />
+                      <input 
+                        type="number" 
+                        placeholder="Stock"
+                        value={diseno.stock === undefined ? '' : diseno.stock}
+                        onChange={e => {
+                          const newDisenos = [...selectedDisenos];
+                          newDisenos[index].stock = parseInt(e.target.value) || 0;
+                          setSelectedDisenos(newDisenos);
+                        }}
+                        className="w-20 px-2 py-1.5 border border-stone-300 rounded focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
+                        title="Inventario disponible"
                       />
                       <button 
                         type="button"

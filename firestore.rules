@@ -116,19 +116,23 @@ service cloud.firestore {
     }
 
     function isValidPedido(data) {
-      return hasOnlyAllowedFields(['producto_nombre', 'diseno_nombre', 'opcion_descripcion', 'talla', 'cantidad', 'total', 'estado', 'createdAt', 'cliente_nombre', 'cliente_iglesia', 'cliente_telefono']) &&
-             hasRequiredFields(['producto_nombre', 'cantidad', 'total', 'estado', 'createdAt', 'cliente_nombre', 'cliente_iglesia', 'cliente_telefono']) &&
+      return hasOnlyAllowedFields(['producto_id', 'producto_nombre', 'producto_imagen', 'diseno_codigo', 'diseno_nombre', 'opcion_descripcion', 'talla', 'precio_unitario', 'cantidad', 'total', 'estado', 'createdAt', 'cliente_nombre', 'cliente_iglesia', 'cliente_telefono']) &&
+             hasRequiredFields(['producto_id', 'producto_nombre', 'producto_imagen', 'precio_unitario', 'cantidad', 'total', 'estado', 'createdAt', 'cliente_nombre', 'cliente_telefono']) &&
+             data.producto_id is string && data.producto_id.size() > 0 && data.producto_id.size() < 100 &&
              data.producto_nombre is string && data.producto_nombre.size() > 0 && data.producto_nombre.size() < 100 &&
+             data.producto_imagen is string && data.producto_imagen.size() > 0 && data.producto_imagen.size() < 500 &&
+             data.precio_unitario is number && data.precio_unitario >= 0 &&
              data.cantidad is number && data.cantidad > 0 && data.cantidad < 1000 &&
              data.total is number && data.total >= 0 &&
              data.estado in ['pendiente', 'completado', 'cancelado'] &&
              data.createdAt is timestamp &&
              data.cliente_nombre is string && data.cliente_nombre.size() > 0 && data.cliente_nombre.size() < 100 &&
-             data.cliente_iglesia is string && data.cliente_iglesia.size() > 0 && data.cliente_iglesia.size() < 100 &&
              data.cliente_telefono is string && data.cliente_telefono.size() > 0 && data.cliente_telefono.size() < 50 &&
-             (!('diseno_nombre' in data) || (data.diseno_nombre is string && data.diseno_nombre.size() < 100)) &&
-             (!('opcion_descripcion' in data) || (data.opcion_descripcion is string && data.opcion_descripcion.size() < 100)) &&
-             (!('talla' in data) || (data.talla is string && data.talla.size() < 50));
+             (!('cliente_iglesia' in data) || data.cliente_iglesia == null || (data.cliente_iglesia is string && data.cliente_iglesia.size() <= 100)) &&
+             (!('diseno_codigo' in data) || data.diseno_codigo == null || (data.diseno_codigo is string && data.diseno_codigo.size() < 50)) &&
+             (!('diseno_nombre' in data) || data.diseno_nombre == null || (data.diseno_nombre is string && data.diseno_nombre.size() < 100)) &&
+             (!('opcion_descripcion' in data) || data.opcion_descripcion == null || (data.opcion_descripcion is string && data.opcion_descripcion.size() < 100)) &&
+             (!('talla' in data) || data.talla == null || (data.talla is string && data.talla.size() < 50));
     }
 
     function isValidUser(data) {

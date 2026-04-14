@@ -114,6 +114,7 @@ export default function Category() {
                   <img 
                     src={getImageUrl(producto.imagen)} 
                     alt={producto.nombre}
+                    loading="lazy"
                     className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-700 ease-in-out"
                     referrerPolicy="no-referrer"
                   />

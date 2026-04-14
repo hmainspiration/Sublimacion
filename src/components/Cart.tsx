@@ -1,27 +1,95 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Trash2, ShoppingBag, Plus, Minus } from 'lucide-react';
+import { X, Trash2, ShoppingBag, Plus, Minus, Edit2, UserX } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { getImageUrl } from '../utils/imageHelper';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getWhatsAppLink } from '../utils/contact';
+import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 export default function Cart() {
-  const { cartItems, isCartOpen, setIsCartOpen, removeFromCart, updateQuantity, cartTotal, clearCart } = useCart();
-  const [clienteNombre, setClienteNombre] = useState('');
-  const [clienteTelefono, setClienteTelefono] = useState('');
-  const [clienteIglesia, setClienteIglesia] = useState('');
+  const { cartItems, isCartOpen, setIsCartOpen, removeFromCart, updateQuantity, cartTotal, clearCart, clienteData, setClienteData } = useCart();
+  const [isEditingCliente, setIsEditingCliente] = useState(false);
+  const [tempNombre, setTempNombre] = useState('');
+  const [tempTelefono, setTempTelefono] = useState('');
+  const [tempIglesia, setTempIglesia] = useState('');
+
+  useEffect(() => {
+    if (clienteData) {
+      setTempNombre(clienteData.nombre);
+      setTempTelefono(clienteData.telefono);
+      setTempIglesia(clienteData.iglesia || '');
+    }
+  }, [clienteData]);
+
+  const handleUpdateQuantity = async (id: string, newQuantity: number) => {
+    updateQuantity(id, newQuantity);
+    
+    // Also update DB if dbId exists
+    const item = cartItems.find(i => i.id === id);
+    if (item && item.dbId) {
+      try {
+        if (newQuantity <= 0) {
+          await deleteDoc(doc(db, 'pedidos', item.dbId));
+        } else {
+          await updateDoc(doc(db, 'pedidos', item.dbId), {
+            cantidad: newQuantity,
+            total: item.precio_unitario * newQuantity
+          });
+        }
+      } catch (error) {
+        console.error("Error updating DB:", error);
+      }
+    }
+  };
+
+  const handleRemoveFromCart = async (id: string) => {
+    removeFromCart(id);
+    
+    const item = cartItems.find(i => i.id === id);
+    if (item && item.dbId) {
+      try {
+        await deleteDoc(doc(db, 'pedidos', item.dbId));
+      } catch (error) {
+        console.error("Error deleting from DB:", error);
+      }
+    }
+  };
+
+  const handleSaveCliente = () => {
+    if (!tempNombre || !tempTelefono) {
+      alert('Por favor, ingresa tu nombre y teléfono.');
+      return;
+    }
+    setClienteData({
+      nombre: tempNombre,
+      telefono: tempTelefono,
+      iglesia: tempIglesia
+    });
+    setIsEditingCliente(false);
+  };
+
+  const handleChangeUser = () => {
+    setClienteData(null);
+    setTempNombre('');
+    setTempTelefono('');
+    setTempIglesia('');
+    setIsEditingCliente(true);
+  };
 
   const handleCheckout = () => {
     if (cartItems.length === 0) return;
-    if (!clienteNombre || !clienteTelefono) {
-      alert('Por favor, ingresa tu nombre y teléfono para procesar el pedido.');
+    if (!clienteData) {
+      alert('Por favor, ingresa tus datos antes de enviar el pedido.');
+      setIsEditingCliente(true);
       return;
     }
 
     let message = `*NUEVO PEDIDO*\n\n`;
     message += `*Datos del Cliente:*\n`;
-    message += `Nombre: ${clienteNombre}\n`;
-    message += `Teléfono: ${clienteTelefono}\n`;
-    if (clienteIglesia) message += `Iglesia/Org: ${clienteIglesia}\n`;
+    message += `Nombre: ${clienteData.nombre}\n`;
+    message += `Teléfono: ${clienteData.telefono}\n`;
+    if (clienteData.iglesia) message += `Iglesia/Org: ${clienteData.iglesia}\n`;
     message += `\n*Detalle del Pedido:*\n`;
 
     cartItems.forEach((item, index) => {
@@ -34,12 +102,7 @@ export default function Cart() {
 
     message += `\n*TOTAL: C$${cartTotal}*`;
 
-    const encodedMessage = encodeURIComponent(message);
-    window.open(`https://wa.me/50557693382?text=${encodedMessage}`, '_blank');
-    
-    // Optional: clear cart after sending
-    // clearCart();
-    // setIsCartOpen(false);
+    window.open(getWhatsAppLink(message), '_blank');
   };
 
   return (
@@ -93,6 +156,7 @@ export default function Cart() {
                         <img 
                           src={getImageUrl(item.producto_imagen)} 
                           alt={item.producto_nombre}
+                          loading="lazy"
                           className="w-full h-full object-cover"
                           referrerPolicy="no-referrer"
                         />
@@ -108,7 +172,7 @@ export default function Cart() {
                         <div className="flex items-center justify-between mt-2">
                           <div className="flex items-center border border-stone-200 rounded-lg bg-white">
                             <button 
-                              onClick={() => updateQuantity(item.id, item.cantidad - 1)}
+                              onClick={() => handleUpdateQuantity(item.id, item.cantidad - 1)}
                               className="p-1 text-stone-500 hover:text-navy-900 hover:bg-stone-50 rounded-l-lg"
                             >
                               <Minus className="h-3 w-3" />
@@ -117,7 +181,7 @@ export default function Cart() {
                               {item.cantidad}
                             </span>
                             <button 
-                              onClick={() => updateQuantity(item.id, item.cantidad + 1)}
+                              onClick={() => handleUpdateQuantity(item.id, item.cantidad + 1)}
                               className="p-1 text-stone-500 hover:text-navy-900 hover:bg-stone-50 rounded-r-lg"
                             >
                               <Plus className="h-3 w-3" />
@@ -126,7 +190,7 @@ export default function Cart() {
                           <div className="flex items-center gap-3">
                             <span className="font-bold text-gold-600">C${item.precio_unitario * item.cantidad}</span>
                             <button 
-                              onClick={() => removeFromCart(item.id)}
+                              onClick={() => handleRemoveFromCart(item.id)}
                               className="text-stone-400 hover:text-red-500 transition-colors"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -138,32 +202,65 @@ export default function Cart() {
                   ))}
 
                   <div className="mt-8 border-t border-stone-100 pt-6">
-                    <h3 className="font-bold text-navy-900 mb-4">Tus Datos</h3>
-                    <div className="space-y-3">
-                      <input 
-                        type="text" 
-                        placeholder="Nombre completo *"
-                        required
-                        value={clienteNombre}
-                        onChange={e => setClienteNombre(e.target.value)}
-                        className="w-full px-4 py-2 border border-stone-200 rounded-xl focus:ring-2 focus:ring-gold-500 focus:border-transparent outline-none"
-                      />
-                      <input 
-                        type="tel" 
-                        placeholder="Teléfono (WhatsApp) *"
-                        required
-                        value={clienteTelefono}
-                        onChange={e => setClienteTelefono(e.target.value)}
-                        className="w-full px-4 py-2 border border-stone-200 rounded-xl focus:ring-2 focus:ring-gold-500 focus:border-transparent outline-none"
-                      />
-                      <input 
-                        type="text" 
-                        placeholder="Iglesia / Organización (Opcional)"
-                        value={clienteIglesia}
-                        onChange={e => setClienteIglesia(e.target.value)}
-                        className="w-full px-4 py-2 border border-stone-200 rounded-xl focus:ring-2 focus:ring-gold-500 focus:border-transparent outline-none"
-                      />
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-bold text-navy-900">Tus Datos</h3>
+                      {clienteData && !isEditingCliente && (
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => setIsEditingCliente(true)}
+                            className="text-xs text-gold-600 hover:text-gold-700 flex items-center gap-1"
+                          >
+                            <Edit2 className="h-3 w-3" /> Editar
+                          </button>
+                          <button 
+                            onClick={handleChangeUser}
+                            className="text-xs text-stone-500 hover:text-red-600 flex items-center gap-1 ml-2"
+                          >
+                            <UserX className="h-3 w-3" /> Cambiar Cliente
+                          </button>
+                        </div>
+                      )}
                     </div>
+                    
+                    {(!clienteData || isEditingCliente) ? (
+                      <div className="space-y-3">
+                        <input 
+                          type="text" 
+                          placeholder="Nombre completo *"
+                          required
+                          value={tempNombre}
+                          onChange={e => setTempNombre(e.target.value)}
+                          className="w-full px-4 py-2 border border-stone-200 rounded-xl focus:ring-2 focus:ring-gold-500 focus:border-transparent outline-none"
+                        />
+                        <input 
+                          type="tel" 
+                          placeholder="Teléfono (WhatsApp) *"
+                          required
+                          value={tempTelefono}
+                          onChange={e => setTempTelefono(e.target.value)}
+                          className="w-full px-4 py-2 border border-stone-200 rounded-xl focus:ring-2 focus:ring-gold-500 focus:border-transparent outline-none"
+                        />
+                        <input 
+                          type="text" 
+                          placeholder="Iglesia / Organización (Opcional)"
+                          value={tempIglesia}
+                          onChange={e => setTempIglesia(e.target.value)}
+                          className="w-full px-4 py-2 border border-stone-200 rounded-xl focus:ring-2 focus:ring-gold-500 focus:border-transparent outline-none"
+                        />
+                        <button 
+                          onClick={handleSaveCliente}
+                          className="w-full py-2 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-xl font-medium transition-colors mt-2"
+                        >
+                          Guardar Datos
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="bg-stone-50 p-4 rounded-xl border border-stone-100">
+                        <p className="font-medium text-navy-900">{clienteData.nombre}</p>
+                        <p className="text-sm text-stone-600">{clienteData.telefono}</p>
+                        {clienteData.iglesia && <p className="text-sm text-stone-600">{clienteData.iglesia}</p>}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

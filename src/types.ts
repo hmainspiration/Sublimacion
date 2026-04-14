@@ -21,6 +21,7 @@ export interface Diseno {
   nombre: string;
   codigo: string;
   imagen?: string;
+  stock?: number;
 }
 
 export interface Precio {
@@ -56,6 +57,7 @@ export interface Pedido {
 
 export interface CartItem {
   id: string; // unique id for the cart item (e.g., timestamp)
+  dbId?: string; // Firestore document ID
   producto_id: string;
   producto_nombre: string;
   producto_imagen: string;
